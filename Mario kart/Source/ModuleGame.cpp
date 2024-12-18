@@ -37,38 +37,62 @@ public:
 		: PhysicEntity(physics->CreateRectangle(_x, _y, 25, 30), _listener)
 		, texture(_texture)
 	{
-
 	}
+	const float forceMagnitude = 1.0f;
+	const float maxSpeed = 10.0f;
+	const float maxRotation = 10.0f;
+
+	const float inicialAngularSpeed = 0.15f;
+	const float angularAcceleration = 0.1f;
+	float forceRotation = 0.0f;
+
+	Timer rotationTimer;
 
 	void Update() override
 	{
 		int x, y;
 		body->GetPhysicPosition(x, y);
 
-		//Movement
-		const float forceMagnitude = 1.0f;
-		const float maxSpeed = 10.0f;
-		b2Vec2 force(0.0f, 0.0f);
-
 		if (IsKeyDown(KEY_W)) // Adelante
 		{
-			force.y -= forceMagnitude;
+			b2Vec2 force();
+			body->body->ApplyForceToCenter(body->body->GetTransform().q.GetXAxis(), true);
+			//body->body->GetAngle()
 		}
 		if (IsKeyDown(KEY_S)) // Atrás
 		{
-			force.y += forceMagnitude;
-		}
-		if (IsKeyDown(KEY_A)) // Izquierda
-		{
-			force.x -= forceMagnitude;
-		}
-		if (IsKeyDown(KEY_D)) // Derecha
-		{
-			force.x += forceMagnitude;
+			//force.y += forceMagnitude / 5;
 		}
 
+		body->body->SetAngularVelocity(forceRotation);
+		
+		if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
+		{
+			rotationTimer.Start();
+		}
+
+		if (IsKeyDown(KEY_A) && forceRotation > -maxRotation) // Izquierda
+		{
+			forceRotation -= (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
+		}
+		if (IsKeyDown(KEY_D) && forceRotation < maxRotation) // Derecha
+		{
+			forceRotation += (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
+		}
+		if (IsKeyUp(KEY_A) && IsKeyUp(KEY_D))
+		{
+			if (forceRotation < 0)
+			{
+				forceRotation += 0.1;
+			}
+			if (forceRotation > 0)
+			{
+				forceRotation -= 0.1;	
+			}
+		}		
+
 		// Aplicar la fuerza al cuerpo físico
-		body->body->ApplyForceToCenter(force, true);
+		//body->body->ApplyForceToCenter(force, true);
 		
 		Vector2 position{ (float)x, (float)y };
 		float scale = 0.3f;
