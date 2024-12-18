@@ -34,7 +34,7 @@ class Kart : public PhysicEntity
 {
 public:
 	Kart(ModulePhysics* physics, int _x, int _y, Module* _listener, Texture2D _texture)
-		: PhysicEntity(physics->CreateRectangle(_x, _y, 25, 30), _listener)
+		: PhysicEntity(physics->CreateRectangle(_x, _y, 30, 25), _listener)
 		, texture(_texture)
 	{
 	}
@@ -98,7 +98,7 @@ public:
 		float scale = 0.3f;
 		Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 		Rectangle dest = { position.x, position.y, (float)texture.width * scale, (float)texture.height * scale };
-		Vector2 origin = { (float)texture.width / 6.2f, (float)texture.height / 6.0f };
+		Vector2 origin = { (float)texture.width / 6.2f, (float)texture.height / 6.3f };
 		float rotation = body->GetRotation() * RAD2DEG;
 		DrawTexturePro(texture, source, dest, origin, rotation, WHITE);
 	}
