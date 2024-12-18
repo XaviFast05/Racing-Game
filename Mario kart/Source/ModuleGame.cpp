@@ -42,8 +42,8 @@ public:
 	const float maxSpeed = 10.0f;
 	const float maxRotation = 10.0f;
 
-	const float inicialAngularSpeed = 0.15f;
-	const float angularAcceleration = 0.1f;
+	const float inicialAngularSpeed = 0.05f;
+	const float angularAcceleration = 0.05f;
 	float forceRotation = 0.0f;
 
 	Timer rotationTimer;
@@ -53,15 +53,32 @@ public:
 		int x, y;
 		body->GetPhysicPosition(x, y);
 
+		float forceX = body->body->GetTransform().q.GetXAxis().x;
+		float forceY = body->body->GetTransform().q.GetXAxis().y;
+
+		b2Vec2 force(forceX, forceY);
+
 		if (IsKeyDown(KEY_W)) // Adelante
 		{
-			b2Vec2 force();
-			body->body->ApplyForceToCenter(body->body->GetTransform().q.GetXAxis(), true);
-			//body->body->GetAngle()
+			forceX += 0.1f;
+			forceY += 0.1f;
+			body->body->ApplyForceToCenter(force, true);
 		}
 		if (IsKeyDown(KEY_S)) // Atrás
 		{
-			//force.y += forceMagnitude / 5;
+
+		}
+		if (IsKeyUp(KEY_W) && IsKeyUp(KEY_S))
+		{
+			if (abs(forceX) > 0)
+			{
+				forceX -= 0.1f;
+			}			
+			if (abs(forceY) > 0)
+			{
+				forceY -= 0.1f;
+			}
+			body->body->ApplyForceToCenter(-force, true);
 		}
 
 		body->body->SetAngularVelocity(forceRotation);
