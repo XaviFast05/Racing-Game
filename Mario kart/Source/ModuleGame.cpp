@@ -213,7 +213,6 @@ private:
 ModuleGame::ModuleGame(Application* app, bool start_enabled) : Module(app, start_enabled)
 {
 	ray_on = false;
-	sensed = false;
 }
 
 ModuleGame::~ModuleGame()
@@ -233,7 +232,10 @@ bool ModuleGame::Start()
 	bonus_fx = App->audio->LoadFx("Assets/bonus.wav");
 
 	//load sensors
-	sensor = App->physics->CreateRectangleSensor(915, 555, 210, 9);
+	winLine = App->physics->CreateRectangleSensor(915, 555, 180, 9);
+	sensor1 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
+	sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
+	sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
 
 	//load karts
 	entities.emplace_back(DBG_NEW Kart(App->physics, 500, 550, this, mario));
@@ -255,7 +257,13 @@ bool ModuleGame::CleanUp()
 	delete kart;
 	delete interior;
 	delete exterior;
-	delete sensor;
+	delete winLine;
+	delete sensor1;
+	delete sensor2;
+	delete sensor3;
+	UnloadTexture(circuit);
+	UnloadTexture(mario);
+
 	return true;
 }
 
@@ -265,6 +273,7 @@ update_status ModuleGame::Update()
 	float scaleX = (float)GetScreenWidth() / circuit.width;
 	float scaleY = (float)GetScreenHeight() / circuit.height;
 	DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+	TextDraw();
 
 	// Actualizar todas las entidades
 	for (PhysicEntity* entity : entities)
@@ -325,5 +334,90 @@ update_status ModuleGame::Update()
 
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-	App->audio->PlayFx(bonus_fx);
+	if (bodyB == winLine && canWin == true) // If the winLine is touched
+	{
+		firstCheck = false;	
+		secondCheck = false;
+		canWin = false;
+		newLap = true;
+		App->audio->PlayFx(bonus_fx);
+		printf("Lap completed\n");
+		Laps++;
+	}
+	else if (bodyB == winLine && firstCheck == true) // Reset if lap is not completed
+	{
+		firstCheck = false;
+		secondCheck = false;
+		canWin = false;
+		newLap = true;
+		printf("canWin Reseted\n");
+	}
+	else if (bodyB == winLine && goThroughWinLine == true) // Reset if lap is not completed
+	{
+		newLap = true;
+		goThroughWinLine = false;
+		printf("newLap Reseted\n");
+	}
+
+	if (bodyB == sensor1 && newLap == true) // If the sensor1 is touched
+	{
+		newLap = false;
+		canWin = false;
+		secondCheck = false;
+		firstCheck = true;
+		printf("First check\n");
+	}
+	else if (bodyB == sensor1 && secondCheck == true) // Reset if sensor1 is touched before winLine
+	{
+		firstCheck = true;
+		secondCheck = false;	
+		canWin = false;
+		newLap = false;
+		printf("firstCheck Reseted\n");
+
+	}
+
+
+	if (bodyB == sensor2 && firstCheck == true) // If the sensor2 is touched
+	{
+		firstCheck = false;
+		secondCheck = true;
+		newLap = false;
+		canWin = false;
+		printf("Second check\n");
+	}
+	else if (bodyB == sensor2 && canWin == true) // Reset if sensor2 is touched before sensor1
+	{
+		firstCheck = false;
+		secondCheck = true;
+		canWin = false;
+		newLap = false;
+		printf("secondCheck Reseted\n");
+	}
+
+
+	if (bodyB == sensor3 && secondCheck == true) // If the sensor3 is touched
+	{
+		canWin = true;
+		firstCheck = false;
+		secondCheck = false;
+		newLap = false;
+		printf("canWin\n");
+	}
+	else if (bodyB == sensor3 && newLap == true) // Dont let the player take the firstCheck unless it goes through winLine
+	{
+		goThroughWinLine = true;
+		newLap = false;
+		printf("Go through winLine\n");
+	}
+}
+
+void ModuleGame::TextDraw()
+{
+	DrawText(TextFormat("Lap: %i / 3\n", Laps), 10, 900, 50, WHITE);
+	if (Laps > 3)
+	{
+		Laps = 1;
+	}
+	
 }

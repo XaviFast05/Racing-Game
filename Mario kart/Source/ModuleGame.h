@@ -33,19 +33,28 @@ public:
 	update_status Update();
 	bool CleanUp();
 	void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
-
+	void TextDraw();
 
 
 public:
 
 	std::vector<PhysicEntity*> entities;
 	
-	PhysBody* sensor;
+	PhysBody* winLine;
+	PhysBody* sensor1;
+	PhysBody* sensor2;
+	PhysBody* sensor3;
 	Kart* kart;
 	InteriorWall* interior;
 	ExteriorWall* exterior;
 
-	bool sensed;
+	bool canWin = false;
+	bool newLap = true;
+	bool firstCheck = false;
+	bool secondCheck = false;
+	bool goThroughWinLine = false;
+
+	int Laps = 1;
 
 	Texture2D circuit;
 	Texture2D mario;
