@@ -25,8 +25,9 @@ public:
 		return 0;
 	}
 
-protected:
 	PhysBody* body;
+protected:
+
 	Module* listener;
 };
 
@@ -127,7 +128,6 @@ public:
 
 private:
 	Texture2D texture;
-
 };
 
 class InteriorWall : public PhysicEntity
@@ -151,8 +151,6 @@ public:
 			136, 664,
 			136, 552,
 			168, 552,
-
-
 	};
 
 	InteriorWall(ModulePhysics* physics, int _x, int _y, Module* _listener, Texture2D _texture)
@@ -236,6 +234,7 @@ bool ModuleGame::Start()
 	sensor1 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
 	sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
 	sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
+	sensor1->body->SetAngularVelocity(5.f);
 
 	//load karts
 	entities.emplace_back(DBG_NEW Kart(App->physics, 500, 550, this, mario));
@@ -287,7 +286,7 @@ update_status ModuleGame::Update()
 		ray.x = GetMouseX();
 		ray.y = GetMouseY();
 	}	
-
+	
 	// Prepare for raycast ------------------------------------------------------
 	
 	vec2i mouse;
@@ -334,7 +333,7 @@ update_status ModuleGame::Update()
 
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-	if (bodyB == winLine && canWin == true) // If the winLine is touched
+	if ((bodyA == kart->body && bodyB == winLine) && canWin == true) // If the winLine is touched
 	{
 		firstCheck = false;	
 		secondCheck = false;
@@ -344,7 +343,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		printf("Lap completed\n");
 		Laps++;
 	}
-	else if (bodyB == winLine && firstCheck == true) // Reset if lap is not completed
+	else if ((bodyA == kart->body && bodyB == winLine) && firstCheck == true) // Reset if lap is not completed
 	{
 		firstCheck = false;
 		secondCheck = false;
@@ -352,14 +351,14 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		newLap = true;
 		printf("canWin Reseted\n");
 	}
-	else if (bodyB == winLine && goThroughWinLine == true) // Reset if lap is not completed
+	else if ((bodyA == kart->body && bodyB == winLine) && goThroughWinLine == true) // Reset if lap is not completed
 	{
 		newLap = true;
 		goThroughWinLine = false;
 		printf("newLap Reseted\n");
 	}
 
-	if (bodyB == sensor1 && newLap == true) // If the sensor1 is touched
+	if ((bodyA == kart->body && bodyB == sensor1) && newLap == true) // If the sensor1 is touched
 	{
 		newLap = false;
 		canWin = false;
@@ -367,7 +366,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		firstCheck = true;
 		printf("First check\n");
 	}
-	else if (bodyB == sensor1 && secondCheck == true) // Reset if sensor1 is touched before winLine
+	else if ((bodyA == kart->body && bodyB == sensor1) && secondCheck == true) // Reset if sensor1 is touched before winLine
 	{
 		firstCheck = true;
 		secondCheck = false;	
@@ -378,7 +377,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 	}
 
 
-	if (bodyB == sensor2 && firstCheck == true) // If the sensor2 is touched
+	if ((bodyA == kart->body && bodyB == sensor2) && firstCheck == true) // If the sensor2 is touched
 	{
 		firstCheck = false;
 		secondCheck = true;
@@ -386,7 +385,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		canWin = false;
 		printf("Second check\n");
 	}
-	else if (bodyB == sensor2 && canWin == true) // Reset if sensor2 is touched before sensor1
+	else if ((bodyA == kart->body && bodyB == sensor2) && canWin == true) // Reset if sensor2 is touched before sensor1
 	{
 		firstCheck = false;
 		secondCheck = true;
@@ -396,7 +395,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 	}
 
 
-	if (bodyB == sensor3 && secondCheck == true) // If the sensor3 is touched
+	if ((bodyA == kart->body && bodyB == sensor3) && secondCheck == true) // If the sensor3 is touched
 	{
 		canWin = true;
 		firstCheck = false;
@@ -404,7 +403,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		newLap = false;
 		printf("canWin\n");
 	}
-	else if (bodyB == sensor3 && newLap == true) // Dont let the player take the firstCheck unless it goes through winLine
+	else if ((bodyA == kart->body && bodyB == sensor3) && newLap == true) // Dont let the player take the firstCheck unless it goes through winLine
 	{
 		goThroughWinLine = true;
 		newLap = false;
