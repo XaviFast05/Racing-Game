@@ -71,6 +71,10 @@ public:
 
 	uint32 bonus_fx;
 
+	Music titleMusic;
+	Music controlsMusic;
+	Music circuitMusic;	
+
 	vec2<int> ray;
 	bool ray_on;
 };

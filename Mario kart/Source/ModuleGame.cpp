@@ -226,7 +226,6 @@ bool ModuleGame::Start()
 {
 	LOG("Loading Intro assets");
 	bool ret = true;
-
 	currentScreen = MAINTITLE;
 
 	App->renderer->camera.x = App->renderer->camera.y = 0;
@@ -236,6 +235,16 @@ bool ModuleGame::Start()
 	
 	bonus_fx = App->audio->LoadFx("Assets/bonus.wav");
 
+	// Load music
+	titleMusic = LoadMusicStream("Assets/SOUND/MUSIC/MainMenu.ogg");
+	controlsMusic = LoadMusicStream("Assets/SOUND/MUSIC/ControlsMenu.wav");
+	circuitMusic = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusic.wav");
+	SetMusicVolume(titleMusic, 0.09f);
+	SetMusicVolume(controlsMusic, 0.09f);
+	SetMusicVolume(circuitMusic, 0.09f);
+	PlayMusicStream(titleMusic);
+	PlayMusicStream(controlsMusic);
+	PlayMusicStream(circuitMusic);	
 	
 	return ret;
 }
@@ -243,7 +252,7 @@ bool ModuleGame::Start()
 // Load assets
 bool ModuleGame::CleanUp()
 {
-	LOG("Unloading Intro scene");
+	LOG("Unloading Game scene");
 	delete kart;
 	delete interior;
 	delete exterior;
@@ -254,27 +263,45 @@ bool ModuleGame::CleanUp()
 	UnloadTexture(circuit);
 	UnloadTexture(mario);
 
+	// Stop and unload music
+	StopMusicStream(titleMusic);
+	StopMusicStream(controlsMusic);
+	StopMusicStream(circuitMusic);
+	UnloadMusicStream(titleMusic);
+	UnloadMusicStream(controlsMusic);
+	UnloadMusicStream(circuitMusic);
 	return true;
 }
 
 // Update: draw background
 update_status ModuleGame::Update()
 {
-
+	
 	// Change game state -------------------------------------
 	if (currentScreen == MAINTITLE) // Main title
 	{
+		// Play music
+		UpdateMusicStream(titleMusic);
 		// Draw main title
-		DrawText("Press SPACE to start", 250, 500, 50, BLACK);
+		DrawText("TITLE", 250, 500, 50, BLACK);
+		
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			currentScreen = CONTROLS;
 		}
+		else if (IsKeyPressed(KEY_ENTER))
+		{
+			currentScreen = GAMEPLAY;
+		}
+		entitiesLoaded = false;
 	}
 	else if (currentScreen == CONTROLS)
 	{
+		// Play music
+		UpdateMusicStream(controlsMusic);
 		// Draw controls
-		DrawText("Press SPACE to start", 250, 500, 50, BLACK);
+		entitiesLoaded = false;
+		DrawText("CONTROLS", 250, 500, 50, BLACK);
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			currentScreen = GAMEPLAY;
@@ -282,6 +309,9 @@ update_status ModuleGame::Update()
 	}
 	else if (currentScreen == GAMEPLAY) // Draw gameplay
 	{
+		TextDraw();
+		// Play music
+		UpdateMusicStream(circuitMusic);
 		//load sensors -------------------------------------
 		if (entitiesLoaded == false)
 		{
@@ -306,8 +336,6 @@ update_status ModuleGame::Update()
 		float scaleY = (float)GetScreenHeight() / circuit.height;
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
 	}
-	
-	TextDraw();
 
 	if (currentScreen == GAMEPLAY)
 	{
