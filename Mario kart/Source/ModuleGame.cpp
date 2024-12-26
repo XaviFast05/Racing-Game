@@ -222,6 +222,8 @@ bool ModuleGame::Start()
 	LOG("Loading Intro assets");
 	bool ret = true;
 
+	currentScreen = MAINTITLE;
+
 	App->renderer->camera.x = App->renderer->camera.y = 0;
 
 	circuit = LoadTexture("Assets/circuit.png");
@@ -229,23 +231,7 @@ bool ModuleGame::Start()
 	
 	bonus_fx = App->audio->LoadFx("Assets/bonus.wav");
 
-	//load sensors
-	winLine = App->physics->CreateRectangleSensor(915, 555, 180, 9);
-	sensor1 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
-	sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
-	sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
-	sensor1->body->SetAngularVelocity(5.f);
-
-	//load karts
-	entities.emplace_back(DBG_NEW Kart(App->physics, 500, 550, this, mario));
-	kart = dynamic_cast<Kart*>(entities[0]);
-
-	//load walls
-	entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
-	entities.emplace_back(DBG_NEW ExteriorWall(App->physics, 0, 0, this, NoTexture));
-	interior = dynamic_cast<InteriorWall*>(entities[1]);
-	exterior = dynamic_cast<ExteriorWall*>(entities[2]);
-	App->renderer->camera.x = App->renderer->camera.y = 0;
+	
 	return ret;
 }
 
@@ -269,64 +255,112 @@ bool ModuleGame::CleanUp()
 // Update: draw background
 update_status ModuleGame::Update()
 {
-	float scaleX = (float)GetScreenWidth() / circuit.width;
-	float scaleY = (float)GetScreenHeight() / circuit.height;
-	DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+
+	// Change game state -------------------------------------
+	if (currentScreen == MAINTITLE) // Main title
+	{
+		// Draw main title
+		DrawText("Press SPACE to start", 250, 500, 50, BLACK);
+		if (IsKeyPressed(KEY_SPACE))
+		{
+			currentScreen = CONTROLS;
+		}
+	}
+	else if (currentScreen == CONTROLS)
+	{
+		// Draw controls
+		DrawText("Press SPACE to start", 250, 500, 50, BLACK);
+		if (IsKeyPressed(KEY_SPACE))
+		{
+			currentScreen = GAMEPLAY;
+		}
+	}
+	else if (currentScreen == GAMEPLAY) // Draw gameplay
+	{
+		//load sensors -------------------------------------
+		if (entitiesLoaded == false)
+		{
+			winLine = App->physics->CreateRectangleSensor(915, 555, 180, 9);
+			sensor1 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
+			sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
+			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
+
+			//load karts -------------------------------------
+			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 550, this, mario));
+			kart = dynamic_cast<Kart*>(entities[0]);
+
+			//load walls -------------------------------------
+			entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
+			entities.emplace_back(DBG_NEW ExteriorWall(App->physics, 0, 0, this, NoTexture));
+			interior = dynamic_cast<InteriorWall*>(entities[1]);
+			exterior = dynamic_cast<ExteriorWall*>(entities[2]);
+			App->renderer->camera.x = App->renderer->camera.y = 0;
+			entitiesLoaded = true;
+		}
+		float scaleX = (float)GetScreenWidth() / circuit.width;
+		float scaleY = (float)GetScreenHeight() / circuit.height;
+		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+	}
+	
 	TextDraw();
 
-	// Actualizar todas las entidades
-	for (PhysicEntity* entity : entities)
+	if (currentScreen == GAMEPLAY)
 	{
-		entity->Update();
-	}
-
-	if(IsKeyPressed(KEY_SPACE))
-	{
-		ray_on = !ray_on;
-		ray.x = GetMouseX();
-		ray.y = GetMouseY();
-	}	
-	
-	// Prepare for raycast ------------------------------------------------------
-	
-	vec2i mouse;
-	mouse.x = GetMouseX();
-	mouse.y = GetMouseY();
-	int ray_hit = ray.DistanceTo(mouse);
-
-	vec2f normal(0.0f, 0.0f);
-
-	// All draw functions ------------------------------------------------------
-
-
-	for (PhysicEntity* entity : entities)
-	{
-		entity->Update();
-		if (ray_on)
+		// Actualizar todas las entidades
+		for (PhysicEntity* entity : entities)
 		{
-			int hit = entity->RayHit(ray, mouse, normal);
-			if (hit >= 0)
+			entity->Update();
+		}
+
+		if (IsKeyPressed(KEY_SPACE))
+		{
+			ray_on = !ray_on;
+			ray.x = GetMouseX();
+			ray.y = GetMouseY();
+		}
+
+		// Prepare for raycast ------------------------------------------------------
+
+		vec2i mouse;
+		mouse.x = GetMouseX();
+		mouse.y = GetMouseY();
+		int ray_hit = ray.DistanceTo(mouse);
+
+		vec2f normal(0.0f, 0.0f);
+
+		// All draw functions ------------------------------------------------------
+
+
+		for (PhysicEntity* entity : entities)
+		{
+			entity->Update();
+			if (ray_on)
 			{
-				ray_hit = hit;
+				int hit = entity->RayHit(ray, mouse, normal);
+				if (hit >= 0)
+				{
+					ray_hit = hit;
+				}
+			}
+		}
+
+
+		// ray -----------------
+		if (ray_on == true)
+		{
+			vec2f destination((float)(mouse.x - ray.x), (float)(mouse.y - ray.y));
+			destination.Normalize();
+			destination *= (float)ray_hit;
+
+			DrawLine(ray.x, ray.y, (int)(ray.x + destination.x), (int)(ray.y + destination.y), RED);
+
+			if (normal.x != 0.0f)
+			{
+				DrawLine((int)(ray.x + destination.x), (int)(ray.y + destination.y), (int)(ray.x + destination.x + normal.x * 25.0f), (int)(ray.y + destination.y + normal.y * 25.0f), Color{ 100, 255, 100, 255 });
 			}
 		}
 	}
 	
-
-	// ray -----------------
-	if(ray_on == true)
-	{
-		vec2f destination((float)(mouse.x-ray.x), (float)(mouse.y-ray.y));
-		destination.Normalize();
-		destination *= (float)ray_hit;
-
-		DrawLine(ray.x, ray.y, (int)(ray.x + destination.x), (int)(ray.y + destination.y), RED);
-
-		if (normal.x != 0.0f)
-		{
-			DrawLine((int)(ray.x + destination.x), (int)(ray.y + destination.y), (int)(ray.x + destination.x + normal.x * 25.0f), (int)(ray.y + destination.y + normal.y * 25.0f), Color{ 100, 255, 100, 255 });
-		}
-	}
 
 	return UPDATE_CONTINUE;
 }

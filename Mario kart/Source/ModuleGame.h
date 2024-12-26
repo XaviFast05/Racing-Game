@@ -22,6 +22,13 @@ class Kart;
 class InteriorWall;
 class ExteriorWall;
 
+enum Screen
+{
+	MAINTITLE,
+	CONTROLS,
+	GAMEPLAY,
+
+};
 
 class ModuleGame : public Module
 {
@@ -38,6 +45,7 @@ public:
 
 public:
 
+	Screen currentScreen;
 	std::vector<PhysicEntity*> entities;
 	
 	PhysBody* winLine;
@@ -53,6 +61,7 @@ public:
 	bool firstCheck = false;
 	bool secondCheck = false;
 	bool goThroughWinLine = false;
+	bool entitiesLoaded = false;
 
 	int Laps = 1;
 
