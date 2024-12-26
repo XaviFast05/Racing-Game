@@ -47,7 +47,11 @@ public:
 	const float angularAcceleration = 0.05f;
 	float forceRotation = 0.0f;
 
+	const float inicialSpeed = 0.1f;
+	const float acceleration = 0.1f;
+
 	Timer rotationTimer;
+	Timer moveTimer;
 
 	void Update() override
 	{
@@ -59,27 +63,28 @@ public:
 
 		b2Vec2 force(forceX, forceY);
 
-		if (IsKeyDown(KEY_W)) // Adelante
+		if (IsKeyPressed(KEY_W))
+		{
+			moveTimer.Start();
+		}
+
+		if (IsKeyDown(KEY_W) && forceX < maxSpeed && forceY < maxSpeed) // Adelante
+		{
+			forceX += inicialSpeed + acceleration * moveTimer.ReadSec();
+			forceY += inicialSpeed + acceleration * moveTimer.ReadSec();
+			body->body->ApplyForceToCenter(force, true);
+		}
+		else if (IsKeyDown(KEY_S) && forceX > -maxSpeed && forceY > -maxSpeed) // Atrás
 		{
 			forceX += 0.1f;
 			forceY += 0.1f;
-			body->body->ApplyForceToCenter(force, true);
-		}
-		if (IsKeyDown(KEY_S)) // Atrás
-		{
-
-		}
-		if (IsKeyUp(KEY_W) && IsKeyUp(KEY_S))
-		{
-			if (abs(forceX) > 0)
-			{
-				forceX -= 0.1f;
-			}			
-			if (abs(forceY) > 0)
-			{
-				forceY -= 0.1f;
-			}
 			body->body->ApplyForceToCenter(-force, true);
+		}
+		else if (IsKeyUp(KEY_W) && IsKeyUp(KEY_S))
+		{
+			b2Vec2 velocity = body->body->GetLinearVelocity();
+			b2Vec2 brakeForce = -0.5f * velocity;
+			body->body->ApplyForceToCenter(brakeForce, true);
 		}
 
 		body->body->SetAngularVelocity(forceRotation);
