@@ -113,10 +113,6 @@ public:
 				forceRotation -= 0.1;	
 			}
 		}		
-
-		// Aplicar la fuerza al cuerpo físico
-		//body->body->ApplyForceToCenter(force, true);
-		
 		Vector2 position{ (float)x, (float)y };
 		float scale = 0.3f;
 		Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
@@ -230,21 +226,28 @@ bool ModuleGame::Start()
 
 	App->renderer->camera.x = App->renderer->camera.y = 0;
 
+	// Load textures
 	circuit = LoadTexture("Assets/circuit.png");
 	mario = LoadTexture("Assets/mario.png");
 	
-	bonus_fx = App->audio->LoadFx("Assets/bonus.wav");
+	// Load sound fx
+	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
+	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
+	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine7.wav");
 
 	// Load music
 	titleMusic = LoadMusicStream("Assets/SOUND/MUSIC/MainMenu.ogg");
 	controlsMusic = LoadMusicStream("Assets/SOUND/MUSIC/ControlsMenu.wav");
 	circuitMusic = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusic.wav");
+	circuitMusicFL = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusicFinalLap.wav");
 	SetMusicVolume(titleMusic, 0.09f);
 	SetMusicVolume(controlsMusic, 0.09f);
 	SetMusicVolume(circuitMusic, 0.09f);
+	SetMusicVolume(circuitMusicFL, 0.09f);
 	PlayMusicStream(titleMusic);
 	PlayMusicStream(controlsMusic);
 	PlayMusicStream(circuitMusic);	
+	PlayMusicStream(circuitMusicFL);
 	
 	return ret;
 }
@@ -267,9 +270,11 @@ bool ModuleGame::CleanUp()
 	StopMusicStream(titleMusic);
 	StopMusicStream(controlsMusic);
 	StopMusicStream(circuitMusic);
+	StopMusicStream(circuitMusicFL);	
 	UnloadMusicStream(titleMusic);
 	UnloadMusicStream(controlsMusic);
 	UnloadMusicStream(circuitMusic);
+	UnloadMusicStream(circuitMusicFL);
 	return true;
 }
 
@@ -309,9 +314,10 @@ update_status ModuleGame::Update()
 	}
 	else if (currentScreen == GAMEPLAY) // Draw gameplay
 	{
-		TextDraw();
+		
 		// Play music
-		UpdateMusicStream(circuitMusic);
+		if (Laps == 3) UpdateMusicStream(circuitMusicFL);
+		else UpdateMusicStream(circuitMusic);
 		//load sensors -------------------------------------
 		if (entitiesLoaded == false)
 		{
@@ -335,6 +341,8 @@ update_status ModuleGame::Update()
 		float scaleX = (float)GetScreenWidth() / circuit.width;
 		float scaleY = (float)GetScreenHeight() / circuit.height;
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+		TextDraw();
+		engineSound();
 	}
 
 	if (currentScreen == GAMEPLAY)
@@ -406,7 +414,11 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheck = false;
 		canWin = false;
 		newLap = true;
-		App->audio->PlayFx(bonus_fx);
+
+		// Play sound
+		if (Laps == 2) App->audio->PlayFx(finalLap_fx);
+		else App->audio->PlayFx(lap_fx);
+
 		printf("Lap completed\n");
 		Laps++;
 	}
@@ -486,4 +498,12 @@ void ModuleGame::TextDraw()
 		Laps = 1;
 	}
 	
+}
+
+void ModuleGame::engineSound()
+{
+	if (IsKeyDown(KEY_W))
+	{
+		App->audio->PlayFx(engine_fx);
+	}
 }

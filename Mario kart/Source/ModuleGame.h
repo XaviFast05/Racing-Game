@@ -41,6 +41,7 @@ public:
 	bool CleanUp();
 	void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 	void TextDraw();
+	void engineSound();
 
 
 public:
@@ -70,10 +71,14 @@ public:
 	Texture2D NoTexture;
 
 	uint32 bonus_fx;
+	uint32 lap_fx;
+	uint32 finalLap_fx;
+	uint32 engine_fx;
 
 	Music titleMusic;
 	Music controlsMusic;
 	Music circuitMusic;	
+	Music circuitMusicFL;
 
 	vec2<int> ray;
 	bool ray_on;
