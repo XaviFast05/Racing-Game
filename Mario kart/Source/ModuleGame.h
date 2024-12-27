@@ -54,6 +54,7 @@ public:
 	PhysBody* sensor2;
 	PhysBody* sensor3;
 	Kart* kart;
+	Kart* kart2;
 	InteriorWall* interior;
 	ExteriorWall* exterior;
 

@@ -34,14 +34,31 @@ protected:
 class Kart : public PhysicEntity
 {
 public:
-	Kart(ModulePhysics* physics, int _x, int _y, Module* _listener, Texture2D _texture)
+	Kart(ModulePhysics* physics, int _x, int _y, Module* _listener, Texture2D _texture, bool playerNum)
 		: PhysicEntity(physics->CreateRectangle(_x, _y, 30, 25), _listener)
 		, texture(_texture)
 	{
+		// Asignamiento de teclas
+		if (playerNum == 0)
+		{
+			upKey = KEY_W;
+			downKey = KEY_S;
+			leftKey = KEY_A;
+			rightKey = KEY_D;
+			turboKey = KEY_SPACE;
+		}		
+		if (playerNum == 1)
+		{
+			upKey = KEY_UP;
+			downKey = KEY_DOWN;
+			leftKey = KEY_LEFT;
+			rightKey = KEY_RIGHT;
+			turboKey = KEY_ENTER;
+		}
 	}
 	const float forceMagnitude = 1.0f;
-	const float maxSpeed = 10.0f;
-	const float maxRotation = 10.0f;
+	const float maxSpeed = 7.0f;
+	const float maxRotation = 5.0f;
 
 	const float inicialAngularSpeed = 0.05f;
 	const float angularAcceleration = 0.05f;
@@ -50,8 +67,23 @@ public:
 	const float inicialSpeed = 0.1f;
 	const float acceleration = 0.1f;
 
+	const float turboTime = 10.0f;
+	const float brakeSpeed = 0.5f;
+
 	Timer rotationTimer;
 	Timer moveTimer;
+
+	KeyboardKey upKey;
+	KeyboardKey downKey;
+	KeyboardKey leftKey;
+	KeyboardKey rightKey;
+	KeyboardKey turboKey;
+
+	Timer turboTimer;
+	void StartTimer()
+	{
+		turboTimer.Start();
+	}
 
 	void Update() override
 	{
@@ -63,46 +95,64 @@ public:
 
 		b2Vec2 force(forceX, forceY);
 
-		if (IsKeyPressed(KEY_W))
+		// Delante
+		if (IsKeyPressed(upKey))
 		{
 			moveTimer.Start();
 		}
-
-		if (IsKeyDown(KEY_W) && forceX < maxSpeed && forceY < maxSpeed) // Adelante
+		if (IsKeyDown(upKey) && forceX < maxSpeed && forceY < maxSpeed) 
 		{
 			forceX += inicialSpeed + acceleration * moveTimer.ReadSec();
 			forceY += inicialSpeed + acceleration * moveTimer.ReadSec();
 			body->body->ApplyForceToCenter(force, true);
 		}
-		else if (IsKeyDown(KEY_S) && forceX > -maxSpeed && forceY > -maxSpeed) // Atrás
+
+		// Atrás
+		else if (IsKeyDown(downKey) && forceX > -maxSpeed && forceY > -maxSpeed) 
 		{
 			forceX += 0.1f;
 			forceY += 0.1f;
 			body->body->ApplyForceToCenter(-force, true);
 		}
-		else if (IsKeyUp(KEY_W) && IsKeyUp(KEY_S))
+
+		// Frenar
+		else if (IsKeyUp(upKey) && IsKeyUp(downKey))
 		{
 			b2Vec2 velocity = body->body->GetLinearVelocity();
-			b2Vec2 brakeForce = -0.5f * velocity;
+			b2Vec2 brakeForce = -brakeSpeed * velocity;
 			body->body->ApplyForceToCenter(brakeForce, true);
 		}
 
+		// Rotar
 		body->body->SetAngularVelocity(forceRotation);
-		
-		if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
+		if (IsKeyPressed(leftKey) || IsKeyPressed(rightKey))
 		{
 			rotationTimer.Start();
 		}
 
-		if (IsKeyDown(KEY_A) && forceRotation > -maxRotation) // Izquierda
+		// Turbo
+		if (IsKeyPressed(turboKey) && turboTimer.ReadSec() > turboTime)
+		{
+			forceX += 2000.0f;
+			forceY += 2000.0f;
+			body->body->ApplyLinearImpulseToCenter(force, true);
+			turboTimer.Start();
+		}
+
+		// Izquierda
+		if (IsKeyDown(leftKey) && forceRotation > -maxRotation) 
 		{
 			forceRotation -= (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
 		}
-		if (IsKeyDown(KEY_D) && forceRotation < maxRotation) // Derecha
+
+		// Derecha
+		if (IsKeyDown(rightKey) && forceRotation < maxRotation) 
 		{
 			forceRotation += (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
 		}
-		if (IsKeyUp(KEY_A) && IsKeyUp(KEY_D))
+
+		// Frenar rotación
+		if (IsKeyUp(leftKey) && IsKeyUp(rightKey))
 		{
 			if (forceRotation < 0)
 			{
@@ -331,8 +381,12 @@ update_status ModuleGame::Update()
 			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
 
 			//load karts -------------------------------------
-			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 550, this, mario));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 560, this, mario, 0));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 600, this, mario, 1));
 			kart = dynamic_cast<Kart*>(entities[0]);
+			kart2 = dynamic_cast<Kart*>(entities[1]);
+			kart->StartTimer();
+			kart2->StartTimer();
 
 			//load walls -------------------------------------
 			entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
@@ -506,7 +560,7 @@ void ModuleGame::TextDraw()
 
 void ModuleGame::engineSound()
 {
-	if (IsKeyDown(KEY_W))
+	if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
 	{
 		App->audio->PlayFx(engine_fx);
 	}
