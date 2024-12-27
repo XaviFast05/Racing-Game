@@ -234,6 +234,7 @@ bool ModuleGame::Start()
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
 	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
 	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine7.wav");
+	screenPass_fx = App->audio->LoadFx("Assets/SOUND/FX/ScreenPass.wav");
 
 	// Load music
 	titleMusic = LoadMusicStream("Assets/SOUND/MUSIC/MainMenu.ogg");
@@ -292,10 +293,12 @@ update_status ModuleGame::Update()
 		
 		if (IsKeyPressed(KEY_SPACE))
 		{
+			App->audio->PlayFx(screenPass_fx);
 			currentScreen = CONTROLS;
 		}
 		else if (IsKeyPressed(KEY_ENTER))
 		{
+			App->audio->PlayFx(screenPass_fx);
 			currentScreen = GAMEPLAY;
 		}
 		entitiesLoaded = false;
@@ -309,6 +312,7 @@ update_status ModuleGame::Update()
 		DrawText("CONTROLS", 250, 500, 50, BLACK);
 		if (IsKeyPressed(KEY_SPACE))
 		{
+			App->audio->PlayFx(screenPass_fx);
 			currentScreen = GAMEPLAY;
 		}
 	}
