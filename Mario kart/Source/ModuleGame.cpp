@@ -279,7 +279,8 @@ bool ModuleGame::Start()
 	// Load textures
 	circuit = LoadTexture("Assets/circuit.png");
 	mario = LoadTexture("Assets/mario.png");
-	
+	luigi = LoadTexture("Assets/luigi.png");
+
 	// Load sound fx
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
 	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
@@ -382,7 +383,7 @@ update_status ModuleGame::Update()
 
 			//load karts -------------------------------------
 			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 560, this, mario, 0));
-			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 600, this, mario, 1));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 600, this, luigi, 1));
 			kart = dynamic_cast<Kart*>(entities[0]);
 			kart2 = dynamic_cast<Kart*>(entities[1]);
 			kart->StartTimer();

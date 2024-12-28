@@ -69,6 +69,7 @@ public:
 
 	Texture2D circuit;
 	Texture2D mario;
+	Texture2D luigi;
 	Texture2D NoTexture;
 
 	uint32 bonus_fx;
