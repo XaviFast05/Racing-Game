@@ -58,6 +58,7 @@ public:
 	InteriorWall* interior;
 	ExteriorWall* exterior;
 
+	// Checks for mario
 	bool canWin = false;
 	bool newLap = true;
 	bool firstCheck = false;
@@ -65,7 +66,19 @@ public:
 	bool goThroughWinLine = false;
 	bool entitiesLoaded = false;
 
+	// Checks for luigi
+	bool canWinL = false;
+	bool newLapL = true;
+	bool firstCheckL = false;
+	bool secondCheckL = false;
+	bool goThroughWinLineL = false;
+	bool entitiesLoadedL = false;
+
+	bool finalLap = false;
+
 	int Laps = 1;
+	int LapsM = 1;
+	int LapsL = 1;
 
 	Texture2D circuit;
 	Texture2D mario;

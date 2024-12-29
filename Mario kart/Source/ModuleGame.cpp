@@ -139,6 +139,12 @@ public:
 			turboTimer.Start();
 		}
 
+		// Turbo text
+		if (turboTimer.ReadSec() > turboTime)
+		{
+			DrawText("TURBO", 250, 500, 50, BLACK);
+		}
+
 		// Izquierda
 		if (IsKeyDown(leftKey) && forceRotation > -maxRotation) 
 		{
@@ -308,15 +314,20 @@ bool ModuleGame::Start()
 bool ModuleGame::CleanUp()
 {
 	LOG("Unloading Game scene");
+	// Unload bodies
 	delete kart;
+	delete kart2;
 	delete interior;
 	delete exterior;
 	delete winLine;
 	delete sensor1;
 	delete sensor2;
 	delete sensor3;
+
+	// Unload textures
 	UnloadTexture(circuit);
 	UnloadTexture(mario);
+	UnloadTexture(luigi);
 
 	// Stop and unload music
 	StopMusicStream(titleMusic);
@@ -371,7 +382,7 @@ update_status ModuleGame::Update()
 	{
 		
 		// Play music
-		if (Laps == 3) UpdateMusicStream(circuitMusicFL);
+		if ((LapsM == 3 || LapsL == 3) && finalLap == true) UpdateMusicStream(circuitMusicFL);
 		else UpdateMusicStream(circuitMusic);
 		//load sensors -------------------------------------
 		if (entitiesLoaded == false)
@@ -453,11 +464,6 @@ update_status ModuleGame::Update()
 			destination *= (float)ray_hit;
 
 			DrawLine(ray.x, ray.y, (int)(ray.x + destination.x), (int)(ray.y + destination.y), RED);
-
-			if (normal.x != 0.0f)
-			{
-				DrawLine((int)(ray.x + destination.x), (int)(ray.y + destination.y), (int)(ray.x + destination.x + normal.x * 25.0f), (int)(ray.y + destination.y + normal.y * 25.0f), Color{ 100, 255, 100, 255 });
-			}
 		}
 	}
 	
@@ -467,6 +473,7 @@ update_status ModuleGame::Update()
 
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
+	// Mario colissions -------------
 	if ((bodyA == kart->body && bodyB == winLine) && canWin == true) // If the winLine is touched
 	{
 		firstCheck = false;	
@@ -475,11 +482,15 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		newLap = true;
 
 		// Play sound
-		if (Laps == 2) App->audio->PlayFx(finalLap_fx);
+		if (LapsM == 2 && finalLap == false)
+		{
+			App->audio->PlayFx(finalLap_fx);
+			finalLap = true;
+		}
 		else App->audio->PlayFx(lap_fx);
 
 		printf("Lap completed\n");
-		Laps++;
+		LapsM++;
 	}
 	else if ((bodyA == kart->body && bodyB == winLine) && firstCheck == true) // Reset if lap is not completed
 	{
@@ -511,7 +522,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		canWin = false;
 		newLap = false;
 		printf("firstCheck Reseted\n");
-
 	}
 
 
@@ -547,16 +557,107 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		newLap = false;
 		printf("Go through winLine\n");
 	}
+
+	// Luigi colissions -------------
+	if ((bodyA == kart2->body && bodyB == winLine) && canWinL == true) // If the winLine is touched
+	{
+		firstCheckL = false;
+		secondCheckL = false;
+		canWinL = false;
+		newLapL = true;
+
+		// Play sound
+		if (LapsL == 2 && finalLap == false)
+		{
+			App->audio->PlayFx(finalLap_fx);
+			finalLap = true;
+		}
+		else App->audio->PlayFx(lap_fx);
+
+		printf("Lap completed\n");
+		LapsL++;
+	}
+	else if ((bodyA == kart2->body && bodyB == winLine) && firstCheckL == true) // Reset if lap is not completed
+	{
+		firstCheckL = false;
+		secondCheckL = false;
+		canWinL = false;
+		newLapL = true;
+		printf("canWin Reseted\n");
+	}
+	else if ((bodyA == kart2->body && bodyB == winLine) && goThroughWinLineL == true) // Reset if lap is not completed
+	{
+		newLapL = true;
+		goThroughWinLineL = false;
+		printf("newLap Reseted\n");
+	}
+
+	if ((bodyA == kart2->body && bodyB == sensor1) && newLapL == true) // If the sensor1 is touched
+	{
+		newLapL = false;
+		canWinL = false;
+		secondCheckL = false;
+		firstCheckL = true;
+		printf("First check\n");
+	}
+	else if ((bodyA == kart2->body && bodyB == sensor1) && secondCheckL == true) // Reset if sensor1 is touched before winLine
+	{
+		firstCheckL = true;
+		secondCheckL = false;
+		canWinL = false;
+		newLapL = false;
+		printf("firstCheck Reseted\n");
+	}
+
+
+	if ((bodyA == kart2->body && bodyB == sensor2) && firstCheckL == true) // If the sensor2 is touched
+	{
+		firstCheckL = false;
+		secondCheckL = true;
+		newLapL = false;
+		canWinL = false;
+		printf("Second check\n");
+	}
+	else if ((bodyA == kart2->body && bodyB == sensor2) && canWinL == true) // Reset if sensor2 is touched before sensor1
+	{
+		firstCheckL = false;
+		secondCheckL = true;
+		canWinL = false;
+		newLapL = false;
+		printf("secondCheck Reseted\n");
+	}
+
+
+	if ((bodyA == kart2->body && bodyB == sensor3) && secondCheckL == true) // If the sensor3 is touched
+	{
+		canWinL = true;
+		firstCheckL = false;
+		secondCheckL = false;
+		newLapL = false;
+		printf("canWin\n");
+	}
+	else if ((bodyA == kart2->body && bodyB == sensor3) && newLapL == true) // Dont let the player take the firstCheck unless it goes through winLine
+	{
+		goThroughWinLineL = true;
+		newLapL = false;
+		printf("Go through winLine\n");
+	}
 }
 
 void ModuleGame::TextDraw()
 {
-	DrawText(TextFormat("Lap: %i / 3\n", Laps), 10, 900, 50, WHITE);
-	if (Laps > 3)
+	// Draw text for Mario
+	DrawText(TextFormat("Lap: %i / 3\n", LapsM), 10, 900, 50, RED);
+	if (LapsM > 3)
 	{
-		Laps = 1;
+		LapsM = 1;
 	}
-	
+	// Draw text for Luigi
+	DrawText(TextFormat("Lap: %i / 3\n", LapsL), 10, 950, 50, GREEN);
+	if (LapsL > 3)
+	{
+		LapsL = 1;
+	}
 }
 
 void ModuleGame::engineSound()
