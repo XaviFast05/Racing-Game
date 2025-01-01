@@ -96,6 +96,8 @@ public:
 	Music circuitMusic;	
 	Music circuitMusicFL;
 
+	float bestTime = 1000000.0f;
+
 	vec2<int> ray;
 	bool ray_on;
 };

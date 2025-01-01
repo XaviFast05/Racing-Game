@@ -72,6 +72,8 @@ public:
 
 	Timer rotationTimer;
 	Timer moveTimer;
+	Timer gameTimer;
+	float currentTime = 0.0f;
 
 	KeyboardKey upKey;
 	KeyboardKey downKey;
@@ -169,6 +171,9 @@ public:
 				forceRotation -= 0.1;	
 			}
 		}		
+
+		currentTime = gameTimer.ReadSec();
+
 		Vector2 position{ (float)x, (float)y };
 		float scale = 0.3f;
 		Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
@@ -393,12 +398,15 @@ update_status ModuleGame::Update()
 			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
 
 			//load karts -------------------------------------
-			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 560, this, mario, 0));
-			entities.emplace_back(DBG_NEW Kart(App->physics, 500, 600, this, luigi, 1));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, this, mario, 0));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, this, luigi, 1));
 			kart = dynamic_cast<Kart*>(entities[0]);
 			kart2 = dynamic_cast<Kart*>(entities[1]);
+
 			kart->StartTimer();
 			kart2->StartTimer();
+
+			kart->gameTimer.Start();
 
 			//load walls -------------------------------------
 			entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
@@ -648,14 +656,36 @@ void ModuleGame::TextDraw()
 {
 	// Draw text for Mario
 	DrawText(TextFormat("Lap: %i / 3\n", LapsM), 10, 900, 50, RED);
+	if (bestTime >= 1000000)
+	{
+		DrawText(TextFormat("Best Time: XX\n"), 10, 850, 50, RED);
+	}
+	else
+	{
+		DrawText(TextFormat("Best Time: %f\n", bestTime), 10, 850, 50, RED);
+	}
+
+	DrawText(TextFormat("Current Time: %f\n", kart->currentTime), 10, 800, 50, RED);
 	if (LapsM > 3)
 	{
+		if (kart->currentTime < bestTime)
+		{
+			bestTime = kart->currentTime;
+		}
+		kart->gameTimer.Start();
 		LapsM = 1;
+		LapsL = 1;
 	}
 	// Draw text for Luigi
 	DrawText(TextFormat("Lap: %i / 3\n", LapsL), 10, 950, 50, GREEN);
 	if (LapsL > 3)
 	{
+		if (kart->currentTime < bestTime)
+		{
+			bestTime = kart->currentTime;
+		}
+		kart->gameTimer.Start();
+		LapsM = 1;
 		LapsL = 1;
 	}
 }
