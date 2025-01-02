@@ -34,11 +34,11 @@ protected:
 class Kart : public PhysicEntity
 {
 public:
-	Kart(ModulePhysics* physics, int _x, int _y, Module* _listener, Texture2D _texture, bool playerNum)
+	Kart(ModulePhysics* physics, int _x, int _y, float initialRotation, Module* _listener, Texture2D _texture, bool playerNum)
 		: PhysicEntity(physics->CreateRectangle(_x, _y, 30, 25), _listener)
 		, texture(_texture)
 	{
-		// Asignamiento de teclas
+		// Player 1 controls
 		if (playerNum == 0)
 		{
 			upKey = KEY_W;
@@ -47,7 +47,8 @@ public:
 			rightKey = KEY_D;
 			turboKey = KEY_SPACE;
 		}		
-		if (playerNum == 1)
+		// Player 2 controls
+		else if (playerNum == 1)
 		{
 			upKey = KEY_UP;
 			downKey = KEY_DOWN;
@@ -55,7 +56,10 @@ public:
 			rightKey = KEY_RIGHT;
 			turboKey = KEY_ENTER;
 		}
+		// Set initial rotation
+		body->body->SetTransform(body->body->GetPosition(), initialRotation);
 	}
+
 	const float forceMagnitude = 1.0f;
 	const float maxSpeed = 7.0f;
 	const float maxRotation = 5.0f;
@@ -73,7 +77,7 @@ public:
 	Timer rotationTimer;
 	Timer moveTimer;
 	Timer gameTimer;
-	float currentTime = 0.0f;
+	float currentTime = 0.f;
 
 	KeyboardKey upKey;
 	KeyboardKey downKey;
@@ -97,7 +101,7 @@ public:
 
 		b2Vec2 force(forceX, forceY);
 
-		// Delante
+		// Forward
 		if (IsKeyPressed(upKey))
 		{
 			moveTimer.Start();
@@ -109,7 +113,7 @@ public:
 			body->body->ApplyForceToCenter(force, true);
 		}
 
-		// Atrás
+		// Backward
 		else if (IsKeyDown(downKey) && forceX > -maxSpeed && forceY > -maxSpeed) 
 		{
 			forceX += 0.1f;
@@ -117,7 +121,7 @@ public:
 			body->body->ApplyForceToCenter(-force, true);
 		}
 
-		// Frenar
+		// Brake
 		else if (IsKeyUp(upKey) && IsKeyUp(downKey))
 		{
 			b2Vec2 velocity = body->body->GetLinearVelocity();
@@ -125,7 +129,7 @@ public:
 			body->body->ApplyForceToCenter(brakeForce, true);
 		}
 
-		// Rotar
+		// Rotate
 		body->body->SetAngularVelocity(forceRotation);
 		if (IsKeyPressed(leftKey) || IsKeyPressed(rightKey))
 		{
@@ -147,19 +151,19 @@ public:
 			DrawText("TURBO", 250, 500, 50, BLACK);
 		}
 
-		// Izquierda
+		// left
 		if (IsKeyDown(leftKey) && forceRotation > -maxRotation) 
 		{
 			forceRotation -= (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
 		}
 
-		// Derecha
+		// right
 		if (IsKeyDown(rightKey) && forceRotation < maxRotation) 
 		{
 			forceRotation += (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
 		}
 
-		// Frenar rotación
+		// brake rotation
 		if (IsKeyUp(leftKey) && IsKeyUp(rightKey))
 		{
 			if (forceRotation < 0)
@@ -173,7 +177,6 @@ public:
 		}		
 
 		currentTime = gameTimer.ReadSec();
-
 		Vector2 position{ (float)x, (float)y };
 		float scale = 0.3f;
 		Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
@@ -295,7 +298,7 @@ bool ModuleGame::Start()
 	// Load sound fx
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
 	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
-	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine7.wav");
+	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine.wav");
 	screenPass_fx = App->audio->LoadFx("Assets/SOUND/FX/ScreenPass.wav");
 
 	// Load music
@@ -303,14 +306,17 @@ bool ModuleGame::Start()
 	controlsMusic = LoadMusicStream("Assets/SOUND/MUSIC/ControlsMenu.wav");
 	circuitMusic = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusic.wav");
 	circuitMusicFL = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusicFinalLap.wav");
+	resultsMusic = LoadMusicStream("Assets/SOUND/MUSIC/Results.wav");
 	SetMusicVolume(titleMusic, 0.09f);
 	SetMusicVolume(controlsMusic, 0.09f);
 	SetMusicVolume(circuitMusic, 0.09f);
 	SetMusicVolume(circuitMusicFL, 0.09f);
+	SetMusicVolume(resultsMusic, 0.5f);
 	PlayMusicStream(titleMusic);
 	PlayMusicStream(controlsMusic);
 	PlayMusicStream(circuitMusic);	
 	PlayMusicStream(circuitMusicFL);
+	PlayMusicStream(resultsMusic);
 	
 	return ret;
 }
@@ -320,14 +326,7 @@ bool ModuleGame::CleanUp()
 {
 	LOG("Unloading Game scene");
 	// Unload bodies
-	delete kart;
-	delete kart2;
-	delete interior;
-	delete exterior;
-	delete winLine;
-	delete sensor1;
-	delete sensor2;
-	delete sensor3;
+	CleanEntities();	
 
 	// Unload textures
 	UnloadTexture(circuit);
@@ -398,11 +397,10 @@ update_status ModuleGame::Update()
 			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
 
 			//load karts -------------------------------------
-			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, this, mario, 0));
-			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, this, luigi, 1));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, 4.71, this, mario, 0));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, 4.71 , this, luigi, 1));
 			kart = dynamic_cast<Kart*>(entities[0]);
 			kart2 = dynamic_cast<Kart*>(entities[1]);
-
 			kart->StartTimer();
 			kart2->StartTimer();
 
@@ -411,8 +409,8 @@ update_status ModuleGame::Update()
 			//load walls -------------------------------------
 			entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
 			entities.emplace_back(DBG_NEW ExteriorWall(App->physics, 0, 0, this, NoTexture));
-			interior = dynamic_cast<InteriorWall*>(entities[1]);
-			exterior = dynamic_cast<ExteriorWall*>(entities[2]);
+			interior = dynamic_cast<InteriorWall*>(entities[0]);
+			exterior = dynamic_cast<ExteriorWall*>(entities[1]);
 			App->renderer->camera.x = App->renderer->camera.y = 0;
 			entitiesLoaded = true;
 		}
@@ -421,11 +419,29 @@ update_status ModuleGame::Update()
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
 		TextDraw();
 		engineSound();
+
+		if (IsKeyPressed(KEY_P))
+		{
+			currentScreen = RESULTS;
+			CleanEntities();
+		}
+	}
+	else if (currentScreen == RESULTS) // Draw results
+	{
+		// Play music
+		UpdateMusicStream(resultsMusic);
+		// Draw results
+		DrawText("RESULTS", 250, 500, 50, BLACK);
+		if (IsKeyPressed(KEY_SPACE))
+		{
+			App->audio->PlayFx(screenPass_fx);
+			currentScreen = MAINTITLE;
+		}
 	}
 
 	if (currentScreen == GAMEPLAY)
 	{
-		// Actualizar todas las entidades
+		//Update all entities
 		for (PhysicEntity* entity : entities)
 		{
 			entity->Update();
@@ -662,10 +678,10 @@ void ModuleGame::TextDraw()
 	}
 	else
 	{
-		DrawText(TextFormat("Best Time: %f\n", bestTime), 10, 850, 50, RED);
+		DrawText(TextFormat("Best Time: %.2f\n", bestTime), 10, 850, 50, RED);
 	}
 
-	DrawText(TextFormat("Current Time: %f\n", kart->currentTime), 10, 800, 50, RED);
+	DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 10, 800, 50, RED);
 	if (LapsM > 3)
 	{
 		if (kart->currentTime < bestTime)
@@ -695,5 +711,67 @@ void ModuleGame::engineSound()
 	if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))
 	{
 		App->audio->PlayFx(engine_fx);
+	}
+}
+
+void ModuleGame::CleanEntities()
+{
+	for (auto entity : entities) 
+	{
+		if (entity != nullptr)
+		{
+			if (entity->body != nullptr)
+			{
+				App->physics->world->DestroyBody(entity->body->body);
+				entity->body->body = nullptr;
+			}
+			delete entity;
+		}
+	}
+	entities.clear();
+
+	// Delete each sensor one by one, because they are not in the entities vector
+	if (winLine != nullptr)
+	{
+		if (winLine->body != nullptr)
+		{
+			App->physics->world->DestroyBody(winLine->body);
+			winLine->body = nullptr;
+		}
+		delete winLine;
+		winLine = nullptr;
+	}
+
+	if (sensor1 != nullptr)
+	{
+		if (sensor1->body != nullptr)
+		{
+			App->physics->world->DestroyBody(sensor1->body);
+			sensor1->body = nullptr;
+		}
+		delete sensor1;
+		sensor1 = nullptr;
+	}
+
+	if (sensor2 != nullptr)
+	{
+		if (sensor2->body != nullptr)
+		{
+			App->physics->world->DestroyBody(sensor2->body);
+			sensor2->body = nullptr;
+		}
+		delete sensor2;
+		sensor2 = nullptr;
+	}
+
+	if (sensor3 != nullptr)
+	{
+		if (sensor3->body != nullptr)
+		{
+			App->physics->world->DestroyBody(sensor3->body);
+			sensor3->body = nullptr;
+		}
+		delete sensor3;
+		sensor3 = nullptr;
 	}
 }

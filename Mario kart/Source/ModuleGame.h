@@ -27,6 +27,7 @@ enum Screen
 	MAINTITLE,
 	CONTROLS,
 	GAMEPLAY,
+	RESULTS,
 
 };
 
@@ -42,6 +43,7 @@ public:
 	void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 	void TextDraw();
 	void engineSound();
+	void CleanEntities();
 
 
 public:
@@ -95,6 +97,7 @@ public:
 	Music controlsMusic;
 	Music circuitMusic;	
 	Music circuitMusicFL;
+	Music resultsMusic;
 
 	float bestTime = 1000000.0f;
 
