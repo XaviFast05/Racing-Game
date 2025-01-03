@@ -55,8 +55,14 @@ public:
 	PhysBody* sensor1;
 	PhysBody* sensor2;
 	PhysBody* sensor3;
+	PhysBody* path1;
+	PhysBody* path2;
+	PhysBody* path3;
+	PhysBody* path4;
+	PhysBody* path5;
 	Kart* kart;
 	Kart* kart2;
+	Kart* kart3;
 	InteriorWall* interior;
 	ExteriorWall* exterior;
 

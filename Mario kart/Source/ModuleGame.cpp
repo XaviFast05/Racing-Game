@@ -34,7 +34,7 @@ protected:
 class Kart : public PhysicEntity
 {
 public:
-	Kart(ModulePhysics* physics, int _x, int _y, float initialRotation, Module* _listener, Texture2D _texture, bool playerNum)
+	Kart(ModulePhysics* physics, int _x, int _y, float initialRotation, Module* _listener, Texture2D _texture, int playerNum)
 		: PhysicEntity(physics->CreateRectangle(_x, _y, 30, 25), _listener)
 		, texture(_texture)
 	{
@@ -46,6 +46,7 @@ public:
 			leftKey = KEY_A;
 			rightKey = KEY_D;
 			turboKey = KEY_SPACE;
+			isPlayer = true;
 		}		
 		// Player 2 controls
 		else if (playerNum == 1)
@@ -55,7 +56,10 @@ public:
 			leftKey = KEY_LEFT;
 			rightKey = KEY_RIGHT;
 			turboKey = KEY_ENTER;
+			isPlayer = true;
 		}
+		else if (playerNum == 2)
+			isPlayer = false;
 		// Set initial rotation
 		body->body->SetTransform(body->body->GetPosition(), initialRotation);
 	}
@@ -85,10 +89,13 @@ public:
 	KeyboardKey rightKey;
 	KeyboardKey turboKey;
 
+	bool isPlayer;
+	int currentPathIndex;
+
 	Timer turboTimer;
 	void StartTimer()
 	{
-		turboTimer.Start();
+		turboTimer.Start(); 
 	}
 
 	void Update() override
@@ -100,81 +107,87 @@ public:
 		float forceY = body->body->GetTransform().q.GetXAxis().y;
 
 		b2Vec2 force(forceX, forceY);
-
-		// Forward
-		if (IsKeyPressed(upKey))
+		if(isPlayer == true)
 		{
-			moveTimer.Start();
-		}
-		if (IsKeyDown(upKey) && forceX < maxSpeed && forceY < maxSpeed) 
-		{
-			forceX += inicialSpeed + acceleration * moveTimer.ReadSec();
-			forceY += inicialSpeed + acceleration * moveTimer.ReadSec();
-			body->body->ApplyForceToCenter(force, true);
-		}
-
-		// Backward
-		else if (IsKeyDown(downKey) && forceX > -maxSpeed && forceY > -maxSpeed) 
-		{
-			forceX += 0.1f;
-			forceY += 0.1f;
-			body->body->ApplyForceToCenter(-force, true);
-		}
-
-		// Brake
-		else if (IsKeyUp(upKey) && IsKeyUp(downKey))
-		{
-			b2Vec2 velocity = body->body->GetLinearVelocity();
-			b2Vec2 brakeForce = -brakeSpeed * velocity;
-			body->body->ApplyForceToCenter(brakeForce, true);
-		}
-
-		// Rotate
-		body->body->SetAngularVelocity(forceRotation);
-		if (IsKeyPressed(leftKey) || IsKeyPressed(rightKey))
-		{
-			rotationTimer.Start();
-		}
-
-		// Turbo
-		if (IsKeyPressed(turboKey) && turboTimer.ReadSec() > turboTime)
-		{
-			forceX += 2000.0f;
-			forceY += 2000.0f;
-			body->body->ApplyLinearImpulseToCenter(force, true);
-			turboTimer.Start();
-		}
-
-		// Turbo text
-		if (turboTimer.ReadSec() > turboTime)
-		{
-			DrawText("TURBO", 250, 500, 50, BLACK);
-		}
-
-		// left
-		if (IsKeyDown(leftKey) && forceRotation > -maxRotation) 
-		{
-			forceRotation -= (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
-		}
-
-		// right
-		if (IsKeyDown(rightKey) && forceRotation < maxRotation) 
-		{
-			forceRotation += (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
-		}
-
-		// brake rotation
-		if (IsKeyUp(leftKey) && IsKeyUp(rightKey))
-		{
-			if (forceRotation < 0)
+			// Forward
+			if (IsKeyPressed(upKey))
 			{
-				forceRotation += 0.1;
+				moveTimer.Start();
 			}
-			if (forceRotation > 0)
+			if (IsKeyDown(upKey) && forceX < maxSpeed && forceY < maxSpeed) 
 			{
-				forceRotation -= 0.1;	
+				forceX += inicialSpeed + acceleration * moveTimer.ReadSec();
+				forceY += inicialSpeed + acceleration * moveTimer.ReadSec();
+				body->body->ApplyForceToCenter(force, true);
 			}
-		}		
+
+			// Backward
+			else if (IsKeyDown(downKey) && forceX > -maxSpeed && forceY > -maxSpeed) 
+			{
+				forceX += 0.1f;
+				forceY += 0.1f;
+				body->body->ApplyForceToCenter(-force, true);
+			}
+
+			// Brake
+			else if (IsKeyUp(upKey) && IsKeyUp(downKey))
+			{
+				b2Vec2 velocity = body->body->GetLinearVelocity();
+				b2Vec2 brakeForce = -brakeSpeed * velocity;
+				body->body->ApplyForceToCenter(brakeForce, true);
+			}
+
+			// Rotate
+			body->body->SetAngularVelocity(forceRotation);
+			if (IsKeyPressed(leftKey) || IsKeyPressed(rightKey))
+			{
+				rotationTimer.Start();
+			}
+
+			// Turbo
+			if (IsKeyPressed(turboKey) && turboTimer.ReadSec() > turboTime)
+			{
+				forceX += 2000.0f;
+				forceY += 2000.0f;
+				body->body->ApplyLinearImpulseToCenter(force, true);
+				turboTimer.Start();
+			}
+
+			// Turbo text
+			if (turboTimer.ReadSec() > turboTime)
+			{
+				DrawText("TURBO", 250, 500, 50, BLACK);
+			}
+
+			// left
+			if (IsKeyDown(leftKey) && forceRotation > -maxRotation) 
+			{
+				forceRotation -= (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
+			}
+
+			// right
+			if (IsKeyDown(rightKey) && forceRotation < maxRotation) 
+			{
+				forceRotation += (inicialAngularSpeed + angularAcceleration * rotationTimer.ReadSec());
+			}
+
+			// brake rotation
+			if (IsKeyUp(leftKey) && IsKeyUp(rightKey))
+			{
+				if (forceRotation < 0)
+				{
+					forceRotation += 0.1;
+				}
+				if (forceRotation > 0)
+				{
+					forceRotation -= 0.1;	
+				}
+			}		
+		}
+		else
+		{
+			CpuMovement();
+		}
 
 		currentTime = gameTimer.ReadSec();
 		Vector2 position{ (float)x, (float)y };
@@ -185,14 +198,56 @@ public:
 		float rotation = body->GetRotation() * RAD2DEG;
 		DrawTexturePro(texture, source, dest, origin, rotation, WHITE);
 	}
-
-	int RayHit(vec2<int> ray, vec2<int> mouse, vec2<float>& normal) override
+	void CpuMovement()
 	{
-		return body->RayCast(ray.x, ray.y, mouse.x, mouse.y, normal.x, normal.y);;
+		// path coordinates
+		std::vector<Vector2> pathSensors = {
+			{915, 420},
+			{200, 85},
+			{87, 670},
+			{500, 600},
+			{780, 915}
+		};
+
+		// reset path index when it reaches the end
+		if (currentPathIndex >= pathSensors.size())
+		{
+			currentPathIndex = 0;
+		}
+
+		// obtain kart position and next destination
+		int x, y;
+		body->GetPhysicPosition(x, y);
+		Vector2 position = { (float)x, (float)y };
+
+		Vector2 target = pathSensors[currentPathIndex];
+
+		// Calculate direction and distance to the next path 
+		Vector2 direction = { target.x - position.x, target.y - position.y };
+		float distance = sqrt(direction.x * direction.x + direction.y * direction.y);
+		direction.x /= distance;
+		direction.y /= distance;
+
+		// Aply force to the kart
+		float forceX = direction.x * (inicialSpeed + acceleration);
+		float forceY = direction.y * (inicialSpeed + acceleration);
+		b2Vec2 force(forceX, forceY);
+		body->body->ApplyForceToCenter(force, true);
+
+		// Chech colision
+		if (distance < 10.0f) // Umbral de colisión
+		{
+			currentPathIndex = (currentPathIndex + 1) % pathSensors.size(); // Cambiar al siguiente sensor
+		}
+
+		// Rotate kart to next location 
+		float angle = atan2(direction.y, direction.x);
+		body->body->SetTransform(body->body->GetPosition(), angle);
 	}
 
 private:
 	Texture2D texture;
+	
 };
 
 class InteriorWall : public PhysicEntity
@@ -396,21 +451,31 @@ update_status ModuleGame::Update()
 			sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
 			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
 
+			//load paths -------------------------------------
+			path1 = App->physics->CreateRectangleSensor(915, 420, 180, 9);
+			path2 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
+			path3 = App->physics->CreateRectangleSensor(87, 670, 145, 9);
+			path4 = App->physics->CreateRectangleSensor(500, 600, 9, 160);
+			path5 = App->physics->CreateRectangleSensor(780, 915, 9, 160);
+
 			//load karts -------------------------------------
 			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, 4.71, this, mario, 0));
-			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, 4.71 , this, luigi, 1));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, 4.71, this, luigi, 1));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 660, 4.71, this, luigi, 2));
 			kart = dynamic_cast<Kart*>(entities[0]);
 			kart2 = dynamic_cast<Kart*>(entities[1]);
+			kart3 = dynamic_cast<Kart*>(entities[2]);
 			kart->StartTimer();
 			kart2->StartTimer();
+			kart3->StartTimer();
 
 			kart->gameTimer.Start();
 
 			//load walls -------------------------------------
 			entities.emplace_back(DBG_NEW InteriorWall(App->physics, 0, 0, this, NoTexture));
 			entities.emplace_back(DBG_NEW ExteriorWall(App->physics, 0, 0, this, NoTexture));
-			interior = dynamic_cast<InteriorWall*>(entities[0]);
-			exterior = dynamic_cast<ExteriorWall*>(entities[1]);
+			interior = dynamic_cast<InteriorWall*>(entities[3]);
+			exterior = dynamic_cast<ExteriorWall*>(entities[4]);
 			App->renderer->camera.x = App->renderer->camera.y = 0;
 			entitiesLoaded = true;
 		}
@@ -500,7 +565,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 	// Mario colissions -------------
 	if ((bodyA == kart->body && bodyB == winLine) && canWin == true) // If the winLine is touched
 	{
-		firstCheck = false;	
+		firstCheck = false;
 		secondCheck = false;
 		canWin = false;
 		newLap = true;
@@ -542,12 +607,11 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 	else if ((bodyA == kart->body && bodyB == sensor1) && secondCheck == true) // Reset if sensor1 is touched before winLine
 	{
 		firstCheck = true;
-		secondCheck = false;	
+		secondCheck = false;
 		canWin = false;
 		newLap = false;
 		printf("firstCheck Reseted\n");
 	}
-
 
 	if ((bodyA == kart->body && bodyB == sensor2) && firstCheck == true) // If the sensor2 is touched
 	{
@@ -565,7 +629,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		newLap = false;
 		printf("secondCheck Reseted\n");
 	}
-
 
 	if ((bodyA == kart->body && bodyB == sensor3) && secondCheck == true) // If the sensor3 is touched
 	{
@@ -633,7 +696,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		printf("firstCheck Reseted\n");
 	}
 
-
 	if ((bodyA == kart2->body && bodyB == sensor2) && firstCheckL == true) // If the sensor2 is touched
 	{
 		firstCheckL = false;
@@ -651,7 +713,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		printf("secondCheck Reseted\n");
 	}
 
-
 	if ((bodyA == kart2->body && bodyB == sensor3) && secondCheckL == true) // If the sensor3 is touched
 	{
 		canWinL = true;
@@ -665,6 +726,15 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		goThroughWinLineL = true;
 		newLapL = false;
 		printf("Go through winLine\n");
+	}
+
+	// path colisions for the cpu karts
+	if (bodyA == kart3->body)
+	{
+		if (bodyB == path1 || bodyB == path2 || bodyB == path3 || bodyB == path4 || bodyB == path5)
+		{
+			kart3->currentPathIndex = (kart3->currentPathIndex + 1) % 5; // change to next path
+		}
 	}
 }
 

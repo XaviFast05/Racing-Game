@@ -1,4 +1,4 @@
 Movimiento: Isaac
-CPU y IA: Martí
+CPU, fricción, resultados : Martí
 HUD y nuevos visuales: Clara
 Laps(done), fricción al salir de la carretera: Xavi
