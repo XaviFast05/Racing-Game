@@ -45,7 +45,6 @@ public:
 	void engineSound();
 	void CleanEntities();
 
-
 public:
 
 	Screen currentScreen;
@@ -72,7 +71,6 @@ public:
 	bool firstCheck = false;
 	bool secondCheck = false;
 	bool goThroughWinLine = false;
-	bool entitiesLoaded = false;
 
 	// Checks for luigi
 	bool canWinL = false;
@@ -80,17 +78,26 @@ public:
 	bool firstCheckL = false;
 	bool secondCheckL = false;
 	bool goThroughWinLineL = false;
-	bool entitiesLoadedL = false;
 
+	// Checks for peach
+	bool canWinP = false;
+	bool newLapP = true;
+	bool firstCheckP = false;
+	bool secondCheckP = false;
+	bool goThroughWinLineP = false;
+
+	bool entitiesLoaded = false;
 	bool finalLap = false;
 
 	int Laps = 1;
 	int LapsM = 1;
 	int LapsL = 1;
+	int LapsP = 1;
 
 	Texture2D circuit;
 	Texture2D mario;
 	Texture2D luigi;
+	Texture2D peach;
 	Texture2D NoTexture;
 
 	uint32 bonus_fx;

@@ -349,6 +349,7 @@ bool ModuleGame::Start()
 	circuit = LoadTexture("Assets/circuit.png");
 	mario = LoadTexture("Assets/mario.png");
 	luigi = LoadTexture("Assets/luigi.png");
+	peach = LoadTexture("Assets/peach.png");
 
 	// Load sound fx
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
@@ -387,6 +388,7 @@ bool ModuleGame::CleanUp()
 	UnloadTexture(circuit);
 	UnloadTexture(mario);
 	UnloadTexture(luigi);
+	UnloadTexture(peach);
 
 	// Stop and unload music
 	StopMusicStream(titleMusic);
@@ -461,7 +463,7 @@ update_status ModuleGame::Update()
 			//load karts -------------------------------------
 			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, 4.71, this, mario, 0));
 			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, 4.71, this, luigi, 1));
-			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 660, 4.71, this, luigi, 2));
+			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 660, 4.71, this, peach, 2));
 			kart = dynamic_cast<Kart*>(entities[0]);
 			kart2 = dynamic_cast<Kart*>(entities[1]);
 			kart3 = dynamic_cast<Kart*>(entities[2]);
@@ -483,13 +485,15 @@ update_status ModuleGame::Update()
 		float scaleY = (float)GetScreenHeight() / circuit.height;
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
 		TextDraw();
-		engineSound();
+		//engineSound();
 
-		if (IsKeyPressed(KEY_P))
+		if (IsKeyPressed(KEY_P) || LapsL > 3 || LapsM > 3 || LapsP > 3)
 		{
 			currentScreen = RESULTS;
 			CleanEntities();
 		}
+
+
 	}
 	else if (currentScreen == RESULTS) // Draw results
 	{
@@ -579,6 +583,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		else App->audio->PlayFx(lap_fx);
 
 		printf("Lap completed\n");
+
 		LapsM++;
 	}
 	else if ((bodyA == kart->body && bodyB == winLine) && firstCheck == true) // Reset if lap is not completed
@@ -728,6 +733,88 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		printf("Go through winLine\n");
 	}
 
+	// CPU peach colissions -------------
+
+	if ((bodyA == kart3->body && bodyB == winLine) && canWinP == true) // If the winLine is touched
+	{
+		firstCheckP = false;
+		secondCheckP = false;
+		canWinP = false;
+		newLapP = true;
+		// Play sound
+		if (LapsP == 2 && finalLap == false)
+		{
+			App->audio->PlayFx(finalLap_fx);
+			finalLap = true;
+		}
+		else App->audio->PlayFx(lap_fx);
+		printf("Lap completed\n");
+		LapsP++;
+	}
+	else if ((bodyA == kart3->body && bodyB == winLine) && firstCheckP == true) // Reset if lap is not completed
+	{
+		firstCheckP = false;
+		secondCheckP = false;
+		canWinP = false;
+		newLapP = true;
+		printf("canWin Reseted\n");
+	}
+	else if ((bodyA == kart3->body && bodyB == winLine) && goThroughWinLineP == true) // Reset if lap is not completed
+	{
+		newLapP = true;
+		goThroughWinLineP = false;
+		printf("newLap Reseted\n");
+	}
+
+	if ((bodyA == kart3->body && bodyB == sensor1) && newLapP == true) // If the sensor1 is touched
+	{
+		newLapP = false;
+		canWinP = false;
+		secondCheckP = false;
+		firstCheckP = true;
+		printf("First check\n");
+	}
+	else if ((bodyA == kart3->body && bodyB == sensor1) && secondCheckP == true) // Reset if sensor1 is touched before winLine
+	{
+		firstCheckP = true;
+		secondCheckP = false;
+		canWinP = false;
+		newLapP = false;
+		printf("firstCheck Reseted\n");
+	}
+
+	if ((bodyA == kart3->body && bodyB == sensor2) && firstCheckP == true) // If the sensor2 is touched
+	{
+		firstCheckP = false;
+		secondCheckP = true;
+		newLapP = false;
+		canWinP = false;
+		printf("Second check\n");
+	}
+	else if ((bodyA == kart3->body && bodyB == sensor2) && canWinP == true) // Reset if sensor2 is touched before sensor1
+	{
+		firstCheckP = false;
+		secondCheckP = true;
+		canWinP = false;
+		newLapP = false;
+		printf("secondCheck Reseted\n");
+	}
+
+	if ((bodyA == kart3->body && bodyB == sensor3) && secondCheckP == true) // If the sensor3 is touched
+	{
+		canWinP = true;
+		firstCheckP = false;
+		secondCheckP = false;
+		newLapP = false;
+		printf("canWin\n");
+	}
+	else if ((bodyA == kart3->body && bodyB == sensor3) && newLapP == true) // Dont let the player take the firstCheck unless it goes through winLine
+	{
+		goThroughWinLineP = true;
+		newLapP = false;
+		printf("Go through winLine\n");
+	}
+
 	// path colisions for the cpu karts
 	if (bodyA == kart3->body)
 	{
@@ -759,8 +846,6 @@ void ModuleGame::TextDraw()
 			bestTime = kart->currentTime;
 		}
 		kart->gameTimer.Start();
-		LapsM = 1;
-		LapsL = 1;
 	}
 	// Draw text for Luigi
 	DrawText(TextFormat("Lap: %i / 3\n", LapsL), 10, 950, 50, GREEN);
@@ -771,8 +856,16 @@ void ModuleGame::TextDraw()
 			bestTime = kart->currentTime;
 		}
 		kart->gameTimer.Start();
-		LapsM = 1;
-		LapsL = 1;
+	}
+	// Draw text for Peach
+	DrawText(TextFormat("Lap: %i / 3\n", LapsP), 400, 950, 50, PINK);
+	if (LapsP > 3)
+	{
+		if (kart->currentTime < bestTime)
+		{
+			bestTime = kart->currentTime;
+		}
+		kart->gameTimer.Start();
 	}
 }
 
@@ -834,7 +927,7 @@ void ModuleGame::CleanEntities()
 		sensor2 = nullptr;
 	}
 
-	if (sensor3 != nullptr)
+	if (sensor3->body != nullptr)
 	{
 		if (sensor3->body != nullptr)
 		{
@@ -844,4 +937,60 @@ void ModuleGame::CleanEntities()
 		delete sensor3;
 		sensor3 = nullptr;
 	}
+
+	if (path1 != nullptr)
+	{
+		if (path1->body != nullptr)
+		{
+			App->physics->world->DestroyBody(path1->body);
+			path1->body = nullptr;
+		}
+		delete path1;
+		path1 = nullptr;
+	}
+	
+	if (path2 != nullptr)
+	{
+		if (path2->body != nullptr)
+		{
+			App->physics->world->DestroyBody(path2->body);
+			path2->body = nullptr;
+		}
+		delete path2;
+		path2 = nullptr;
+	}
+
+	if (path3 != nullptr)
+	{
+		if (path3->body != nullptr)
+		{
+			App->physics->world->DestroyBody(path3->body);
+			path3->body = nullptr;
+		}
+		delete path3;
+		path3 = nullptr;
+	}
+
+	if (path4 != nullptr)
+	{
+		if (path4->body != nullptr)
+		{
+			App->physics->world->DestroyBody(path4->body);
+			path4->body = nullptr;
+		}
+		delete path4;
+		path4 = nullptr;
+	}
+
+	if (path5 != nullptr)
+	{
+		if (path5->body != nullptr)
+		{
+			App->physics->world->DestroyBody(path5->body);
+			path5->body = nullptr;
+		}
+		delete path5;
+		path5 = nullptr;
+	}
 }
+
