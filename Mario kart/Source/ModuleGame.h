@@ -44,6 +44,7 @@ public:
 	void TextDraw();
 	void engineSound();
 	void CleanEntities();
+	void DrawPodium();
 
 public:
 
@@ -93,6 +94,10 @@ public:
 	int LapsM = 1;
 	int LapsL = 1;
 	int LapsP = 1;
+
+	int PositionPointsM = 0;
+	int PositionPointsL = 0;
+	int PositionPointsP = 0;
 
 	Texture2D circuit;
 	Texture2D mario;
