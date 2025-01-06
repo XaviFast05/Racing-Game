@@ -348,6 +348,10 @@ bool ModuleGame::Start()
 
 	// Load textures
 	circuit = LoadTexture("Assets/circuit.png");
+	title = LoadTexture("Assets/TitleScreen.png");
+	controls = LoadTexture("Assets/Controls.png");
+	results = LoadTexture("Assets/Results.png");
+	ui = LoadTexture("Assets/Cuadradetes.png");
 	mario = LoadTexture("Assets/mario.png");
 	luigi = LoadTexture("Assets/luigi.png");
 	peach = LoadTexture("Assets/peach.png");
@@ -387,6 +391,10 @@ bool ModuleGame::CleanUp()
 
 	// Unload textures
 	UnloadTexture(circuit);
+	UnloadTexture(title);
+	UnloadTexture(controls);
+	UnloadTexture(results);
+	UnloadTexture(ui);
 	UnloadTexture(mario);
 	UnloadTexture(luigi);
 	UnloadTexture(peach);
@@ -413,7 +421,10 @@ update_status ModuleGame::Update()
 		// Play music
 		UpdateMusicStream(titleMusic);
 		// Draw main title
-		DrawText("TITLE", 250, 500, 50, BLACK);
+		float scaleX = (float)GetScreenWidth() / title.width;
+		float scaleY = (float)GetScreenHeight() / title.height;
+		DrawTextureEx(title, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+		/*DrawText("TITLE", 250, 500, 50, BLACK);*/
 		
 		if (IsKeyPressed(KEY_SPACE))
 		{
@@ -433,7 +444,10 @@ update_status ModuleGame::Update()
 		UpdateMusicStream(controlsMusic);
 		// Draw controls
 		entitiesLoaded = false;
-		DrawText("CONTROLS", 250, 500, 50, BLACK);
+		float scaleX = (float)GetScreenWidth() / controls.width;
+		float scaleY = (float)GetScreenHeight() / controls.height;
+		DrawTextureEx(controls, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+		/*DrawText("CONTROLS", 250, 500, 50, BLACK);*/
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			App->audio->PlayFx(screenPass_fx);
@@ -446,6 +460,7 @@ update_status ModuleGame::Update()
 		// Play music
 		if ((LapsM == 3 || LapsL == 3 || LapsP == 3) && finalLap == true) UpdateMusicStream(circuitMusicFL);
 		else UpdateMusicStream(circuitMusic);
+		
 		//load sensors -------------------------------------
 		if (entitiesLoaded == false)
 		{
@@ -482,9 +497,13 @@ update_status ModuleGame::Update()
 			App->renderer->camera.x = App->renderer->camera.y = 0;
 			entitiesLoaded = true;
 		}
+		
 		float scaleX = (float)GetScreenWidth() / circuit.width;
 		float scaleY = (float)GetScreenHeight() / circuit.height;
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+
+		DrawTexture(ui, 0, 0, WHITE);
+
 		TextDraw();
 		engineSound();
 
@@ -501,7 +520,20 @@ update_status ModuleGame::Update()
 		// Play music
 		UpdateMusicStream(resultsMusic);
 		// Draw results
-		DrawText("RESULTS", 250, 500, 50, BLACK);
+		float scaleX = (float)GetScreenWidth() / results.width;
+		float scaleY = (float)GetScreenHeight() / results.height;
+		DrawTextureEx(results, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
+
+		if (bestTime >= 1000000)
+		{
+			DrawText("Best Time: XX\n", 150, 400, 70, WHITE);
+		}
+		else
+		{
+			DrawText(TextFormat("Best Time: %.2f\n", bestTime), 150, 400, 70, WHITE);
+		}
+
+		/*DrawText("RESULTS", 250, 500, 50, BLACK);*/
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			App->audio->PlayFx(screenPass_fx);
@@ -855,51 +887,53 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 
 void ModuleGame::TextDraw()
 {
-	// Draw text for Mario
-	DrawText(TextFormat("Lap: %i / 3\n", LapsM), 10, 900, 50, RED);
-	if (bestTime >= 1000000)
-	{
-		DrawText(TextFormat("Best Time: XX\n"), 10, 850, 50, RED);
-	}
-	else
-	{
-		DrawText(TextFormat("Best Time: %.2f\n", bestTime), 10, 850, 50, RED);
-	}
+    // Texto para Mario (esquina inferior izquierda)
+    DrawText(TextFormat("Lap: %i / 3\n", LapsM), 85, 938, 30, RED);
+   /* if (bestTime >= 1000000)
+    {
+        DrawText("Best Time: XX\n", 50, 930, 30, RED);
+    }
+    else
+    {
+        DrawText(TextFormat("Best Time: %.2f\n", bestTime), 50, 930, 30, RED);
+    }*/
 
-	DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 10, 800, 50, RED);
-	if (LapsM > 3)
-	{
-		if (kart->currentTime < bestTime)
-		{
-			bestTime = kart->currentTime;
-		}
-		kart->gameTimer.Start();
-	}
-	// Draw text for Luigi
-	DrawText(TextFormat("Lap: %i / 3\n", LapsL), 10, 950, 50, GREEN);
-	if (LapsL > 3)
-	{
-		if (kart->currentTime < bestTime)
-		{
-			bestTime = kart->currentTime;
-		}
-		kart->gameTimer.Start();
-	}
-	// Draw text for Peach
-	DrawText(TextFormat("Lap: %i / 3\n", LapsP), 400, 950, 50, PINK);
-	if (LapsP > 3)
-	{
-		if (kart->currentTime < bestTime)
-		{
-			bestTime = kart->currentTime;
-		}
-		kart->gameTimer.Start();
-	}
+    DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 460, 35, 28, RED);
+    if (LapsM > 3)
+    {
+        if (kart->currentTime < bestTime)
+        {
+            bestTime = kart->currentTime;
+        }
+        kart->gameTimer.Start();
+    }
 
-	// Draw podium positions
-	DrawPodium();
+    // Texto para Luigi (esquina inferior izquierda)
+    DrawText(TextFormat("Lap: %i / 3\n", LapsL), 290, 938, 30, GREEN);
+    if (LapsL > 3)
+    {
+        if (kart->currentTime < bestTime)
+        {
+            bestTime = kart->currentTime;
+        }
+        kart->gameTimer.Start();
+    }
 
+    // Texto para Peach (esquina superior derecha)
+   /* DrawText(TextFormat("Lap: %i / 3\n", LapsP), 800, 50, 50, PINK);
+    if (LapsP > 3)
+    {
+        if (kart->currentTime < bestTime)
+        {
+            bestTime = kart->currentTime;
+        }
+        kart->gameTimer.Start();
+    }*/
+
+    // Dibuja posiciones del podio
+    DrawPodium();
 }
+
 
 void ModuleGame::DrawPodium()
 {

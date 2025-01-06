@@ -100,6 +100,10 @@ public:
 	int PositionPointsP = 0;
 
 	Texture2D circuit;
+	Texture2D title;
+	Texture2D controls;
+	Texture2D results;
+	Texture2D ui;
 	Texture2D mario;
 	Texture2D luigi;
 	Texture2D peach;
