@@ -91,6 +91,8 @@ public:
 	KeyboardKey turboKey;
 
 	bool isPlayer;
+	bool turboMReady;
+	bool turboLReady;
 	int currentPathIndex;
 
 	Timer turboTimer;
@@ -155,9 +157,24 @@ public:
 			}
 
 			// Turbo text
-			if (turboTimer.ReadSec() > turboTime)
+			if (turboKey == KEY_SPACE && turboTimer.ReadSec() > turboTime)
 			{
-				DrawText("TURBO", 250, 500, 50, BLACK);
+				DrawText("TURBO", 85, 900, 30, RED);
+				turboMReady == true;
+			}
+			else if (turboKey == KEY_SPACE && turboTimer.ReadSec() < turboTime)
+			{
+				DrawText("-----", 85, 900, 30, RED);
+			}
+			
+			if (turboKey == KEY_ENTER && turboTimer.ReadSec() > turboTime)
+			{
+				DrawText("TURBO", 290, 900, 30, GREEN);
+				turboLReady == true;
+			}
+			else if (turboKey == KEY_ENTER && turboTimer.ReadSec() < turboTime)
+			{
+				DrawText("-----", 290, 900, 30, GREEN);
 			}
 
 			// left
@@ -360,6 +377,7 @@ bool ModuleGame::Start()
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
 	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
 	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine8.wav");
+	turbo_fx = App->audio->LoadFx("Assets/SOUND/FX/Turbo.wav");
 	screenPass_fx = App->audio->LoadFx("Assets/SOUND/FX/ScreenPass.wav");
 
 	// Load music
@@ -424,7 +442,7 @@ update_status ModuleGame::Update()
 		float scaleX = (float)GetScreenWidth() / title.width;
 		float scaleY = (float)GetScreenHeight() / title.height;
 		DrawTextureEx(title, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
-		/*DrawText("TITLE", 250, 500, 50, BLACK);*/
+
 		
 		if (IsKeyPressed(KEY_SPACE))
 		{
@@ -447,7 +465,7 @@ update_status ModuleGame::Update()
 		float scaleX = (float)GetScreenWidth() / controls.width;
 		float scaleY = (float)GetScreenHeight() / controls.height;
 		DrawTextureEx(controls, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
-		/*DrawText("CONTROLS", 250, 500, 50, BLACK);*/
+
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			App->audio->PlayFx(screenPass_fx);
@@ -503,14 +521,12 @@ update_status ModuleGame::Update()
 		DrawTextureEx(circuit, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
 
 		DrawTexture(ui, 0, 0, WHITE);
-
-		TextDraw();
 		engineSound();
 
 		if (IsKeyPressed(KEY_P) || LapsL > 3 || LapsM > 3 || LapsP > 3)
 		{
-			currentScreen = RESULTS;
 			CleanEntities();
+			currentScreen = RESULTS;
 		}
 
 
@@ -524,16 +540,6 @@ update_status ModuleGame::Update()
 		float scaleY = (float)GetScreenHeight() / results.height;
 		DrawTextureEx(results, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
 
-		if (bestTime >= 1000000)
-		{
-			DrawText("Best Time: XX\n", 150, 400, 70, WHITE);
-		}
-		else
-		{
-			DrawText(TextFormat("Best Time: %.2f\n", bestTime), 150, 400, 70, WHITE);
-		}
-
-		/*DrawText("RESULTS", 250, 500, 50, BLACK);*/
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			App->audio->PlayFx(screenPass_fx);
@@ -593,6 +599,8 @@ update_status ModuleGame::Update()
 		}
 	}
 	
+	// Draw text
+	TextDraw();
 
 	return UPDATE_CONTINUE;
 }
@@ -887,51 +895,53 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 
 void ModuleGame::TextDraw()
 {
-    // Texto para Mario (esquina inferior izquierda)
-    DrawText(TextFormat("Lap: %i / 3\n", LapsM), 85, 938, 30, RED);
-   /* if (bestTime >= 1000000)
-    {
-        DrawText("Best Time: XX\n", 50, 930, 30, RED);
-    }
-    else
-    {
-        DrawText(TextFormat("Best Time: %.2f\n", bestTime), 50, 930, 30, RED);
-    }*/
-
-    DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 460, 35, 28, RED);
-    if (LapsM > 3)
-    {
-        if (kart->currentTime < bestTime)
-        {
-            bestTime = kart->currentTime;
-        }
-        kart->gameTimer.Start();
-    }
-
-    // Texto para Luigi (esquina inferior izquierda)
-    DrawText(TextFormat("Lap: %i / 3\n", LapsL), 290, 938, 30, GREEN);
-    if (LapsL > 3)
-    {
-        if (kart->currentTime < bestTime)
-        {
-            bestTime = kart->currentTime;
-        }
-        kart->gameTimer.Start();
-    }
-
-    // Texto para Peach (esquina superior derecha)
-   /* DrawText(TextFormat("Lap: %i / 3\n", LapsP), 800, 50, 50, PINK);
-    if (LapsP > 3)
-    {
-        if (kart->currentTime < bestTime)
-        {
-            bestTime = kart->currentTime;
-        }
-        kart->gameTimer.Start();
-    }*/
-
-    // Dibuja posiciones del podio
-    DrawPodium();
+	if (currentScreen == GAMEPLAY)
+	{
+		for (auto entity : entities)
+		{
+			if (entity != nullptr)
+			{
+				if (entity->body != nullptr)
+				{
+					DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 460, 35, 28, RED);
+					if (LapsM > 3)
+					{
+						if (kart->currentTime < bestTime)
+						{
+							bestTime = kart->currentTime;
+						}
+						kart->gameTimer.Start();
+					}
+					// Mario text 
+					DrawText(TextFormat("Lap: %i / 3\n", LapsM), 80, 938, 30, RED);
+					// Luigi text 
+					DrawText(TextFormat("Lap: %i / 3\n", LapsL), 285, 938, 30, GREEN);
+					if (LapsL > 3)
+					{
+						if (kart->currentTime < bestTime)
+						{
+							bestTime = kart->currentTime;
+						}
+						kart->gameTimer.Start();
+					}
+					DrawPodium();
+				}
+			}
+		}
+	}
+    
+	else if (currentScreen == RESULTS)
+	{
+		// Martí, aqui hauria de sortir totes les coses que vols que surtin a la pantalla de resultats, com el millor temps i podium.
+		if (bestTime >= 1000000)
+		{
+			DrawText("Best Time: XX\n", 150, 400, 70, WHITE);
+		}
+		else
+		{
+			DrawText(TextFormat("Best Time: %.2f\n", bestTime), 150, 400, 70, WHITE);
+		}
+	}
 }
 
 
@@ -940,25 +950,55 @@ void ModuleGame::DrawPodium()
 	struct KartPosition
 	{
 		const char* name;
-		int points;
+		int x;
+		int y;
+		int laps;
+		int positionPoints;
+		float distance;
 		Color color;
 	};
 
 	KartPosition karts[] = {
-		{"Mario", PositionPointsM, RED},
-		{"Luigi", PositionPointsL, GREEN},
-		{"Peach", PositionPointsP, PINK}
+		{"Mario", 0, 0, LapsM, PositionPointsM, 0.0f, RED},
+		{"Luigi", 0, 0, LapsL, PositionPointsL, 0.0f, GREEN},
+		{"Peach", 0, 0, LapsP, PositionPointsP, 0.0f, PINK}
 	};
 
-	// Sort karts by points in descending order
+	// Get current karts positions
+	kart->body->GetPhysicPosition(karts[0].x, karts[0].y);
+	kart2->body->GetPhysicPosition(karts[1].x, karts[1].y);
+	kart3->body->GetPhysicPosition(karts[2].x, karts[2].y);
+
+	// Initial position of the circuit
+	int startX = 916;
+	int startY = 555;
+
+	// Calculate the distance of each kart to the initial circuit position
+	auto calculateDistance = [startX, startY](int x, int y) -> float {
+		return sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
+		};
+
+	karts[0].distance = calculateDistance(karts[0].x, karts[0].y);
+	karts[1].distance = calculateDistance(karts[1].x, karts[1].y);
+	karts[2].distance = calculateDistance(karts[2].x, karts[2].y);
+
+	// Sort karts by laps, position points and distance
 	std::sort(std::begin(karts), std::end(karts), [](const KartPosition& a, const KartPosition& b) {
-		return a.points > b.points;
+		if (a.laps != b.laps)
+		{
+			return a.laps > b.laps; // More laps
+		}
+		if (a.positionPoints != b.positionPoints)
+		{
+			return a.positionPoints > b.positionPoints; // More position points
+		}
+		return a.distance > b.distance; // More distance
 		});
 
 	// Draw podium positions
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; ++i)
 	{
-		DrawText(TextFormat("%d. %s %d", i + 1, karts[i].name, karts[i].points), 750, 30 + i * 35, 35, karts[i].color);
+		DrawText(TextFormat("%d. %s", i + 1, karts[i].name), 765, 25 + i * 35, 35, karts[i].color);
 	}
 }
 
@@ -967,6 +1007,18 @@ void ModuleGame::engineSound()
 	if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
 	{
 		App->audio->PlayFx(engine_fx);
+	}
+
+	if (kart->turboMReady == true)
+	{
+		App->audio->PlayFx(turbo_fx);
+
+	}
+
+	if (IsKeyPressed(KEY_ENTER) && kart->turboLReady == true)
+	{
+		App->audio->PlayFx(turbo_fx);
+		kart->turboLReady = false;	
 	}
 }
 
@@ -1020,7 +1072,7 @@ void ModuleGame::CleanEntities()
 		sensor2 = nullptr;
 	}
 
-	if (sensor3->body != nullptr)
+	if (sensor3 != nullptr)
 	{
 		if (sensor3->body != nullptr)
 		{

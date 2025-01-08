@@ -113,6 +113,7 @@ public:
 	uint32 lap_fx;
 	uint32 finalLap_fx;
 	uint32 engine_fx;
+	uint32 turbo_fx;
 	uint32 screenPass_fx;
 
 	Music titleMusic;
