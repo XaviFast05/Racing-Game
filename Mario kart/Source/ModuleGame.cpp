@@ -386,11 +386,6 @@ bool ModuleGame::Start()
 	circuitMusic = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusic.wav");
 	circuitMusicFL = LoadMusicStream("Assets/SOUND/MUSIC/CircuitMusicFinalLap.wav");
 	resultsMusic = LoadMusicStream("Assets/SOUND/MUSIC/Results.wav");
-	SetMusicVolume(titleMusic, 0.09f);
-	SetMusicVolume(controlsMusic, 0.09f);
-	SetMusicVolume(circuitMusic, 0.09f);
-	SetMusicVolume(circuitMusicFL, 0.09f);
-	SetMusicVolume(resultsMusic, 0.5f);
 	PlayMusicStream(titleMusic);
 	PlayMusicStream(controlsMusic);
 	PlayMusicStream(circuitMusic);	
@@ -1012,7 +1007,7 @@ void ModuleGame::engineSound()
 	if (kart->turboMReady == true)
 	{
 		App->audio->PlayFx(turbo_fx);
-
+		kart->turboMReady = false;
 	}
 
 	if (IsKeyPressed(KEY_ENTER) && kart->turboLReady == true)
