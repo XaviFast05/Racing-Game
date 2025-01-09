@@ -489,6 +489,22 @@ update_status ModuleGame::Update()
 			path4 = App->physics->CreateRectangleSensor(500, 600, 9, 160);
 			path5 = App->physics->CreateRectangleSensor(780, 915, 9, 160);
 
+			//load tracks ------------------------------------
+			track1 = App->physics->CreateRectangleSensor(935, 641, 82, 510);
+			track2 = App->physics->CreateRectangleSensor(571, 229, 830, 82);
+			track3 = App->physics->CreateRectangleSensor(150, 90, 208, 92);
+			track4 = App->physics->CreateRectangleSensor(80, 447, 82, 609);
+			track5 = App->physics->CreateRectangleSensor(306, 662, 492, 82);
+			track6 = App->physics->CreateRectangleSensor(629, 740, 442, 82);
+			track7 = App->physics->CreateRectangleSensor(840, 900, 220, 96);
+
+			//rotate tracks ----------------------------------
+			track2->body->SetTransform(track2->body->GetPosition(), 26.5f * (b2_pi / 180.0f));
+			track3->body->SetTransform(track3->body->GetPosition(), 335.0f * (b2_pi / 180.0f));
+			track5->body->SetTransform(track5->body->GetPosition(), 337.0f * (b2_pi / 180.0f));
+			track6->body->SetTransform(track6->body->GetPosition(), 61.0f * (b2_pi / 180.0f));
+			track7->body->SetTransform(track7->body->GetPosition(), 345.0f * (b2_pi / 180.0f));
+
 			//load karts -------------------------------------
 			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, 4.71, this, mario, 0));
 			entities.emplace_back(DBG_NEW Kart(App->physics, 952, 630, 4.71, this, luigi, 1));

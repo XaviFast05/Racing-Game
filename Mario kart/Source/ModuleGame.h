@@ -52,17 +52,30 @@ public:
 	std::vector<PhysicEntity*> entities;
 	
 	PhysBody* winLine;
+	//sensors
 	PhysBody* sensor1;
 	PhysBody* sensor2;
 	PhysBody* sensor3;
+	//paths
 	PhysBody* path1;
 	PhysBody* path2;
 	PhysBody* path3;
 	PhysBody* path4;
 	PhysBody* path5;
+	//tracks
+	PhysBody* track1;
+	PhysBody* track2;
+	PhysBody* track3;
+	PhysBody* track4;
+	PhysBody* track5;
+	PhysBody* track6;
+	PhysBody* track7;
+
+	//karts
 	Kart* kart;
 	Kart* kart2;
 	Kart* kart3;
+	//walls
 	InteriorWall* interior;
 	ExteriorWall* exterior;
 
