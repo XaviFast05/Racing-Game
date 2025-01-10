@@ -509,7 +509,10 @@ update_status ModuleGame::Update()
 		float scaleX = (float)GetScreenWidth() / title.width;
 		float scaleY = (float)GetScreenHeight() / title.height;
 		DrawTextureEx(title, { 0, 0 }, 0.0f, fmax(scaleX, scaleY), WHITE);
-
+		Laps = 1;
+		LapsM = 1;
+		LapsL = 1;
+		LapsP = 1;
 		
 		if (IsKeyPressed(KEY_SPACE))
 		{
@@ -609,6 +612,11 @@ update_status ModuleGame::Update()
 
 		if (IsKeyPressed(KEY_P) || LapsL > 3 || LapsM > 3 || LapsP > 3)
 		{
+			if (kart->currentTime < bestTime)
+			{
+				bestTime = kart->currentTime;
+			}
+			kart->gameTimer.Start();
 			CleanEntities();
 			currentScreen = RESULTS;
 		}
@@ -1029,26 +1037,10 @@ void ModuleGame::TextDraw()
 				if (entity->body != nullptr)
 				{
 					DrawText(TextFormat("Current Time: %.2f\n", kart->currentTime), 460, 35, 28, RED);
-					if (LapsM > 3)
-					{
-						if (kart->currentTime < bestTime)
-						{
-							bestTime = kart->currentTime;
-						}
-						kart->gameTimer.Start();
-					}
 					// Mario text 
 					DrawText(TextFormat("Lap: %i / 3\n", LapsM), 80, 938, 30, RED);
 					// Luigi text 
 					DrawText(TextFormat("Lap: %i / 3\n", LapsL), 285, 938, 30, GREEN);
-					if (LapsL > 3)
-					{
-						if (kart->currentTime < bestTime)
-						{
-							bestTime = kart->currentTime;
-						}
-						kart->gameTimer.Start();
-					}
 					DrawPodium();
 				}
 			}
@@ -1060,11 +1052,17 @@ void ModuleGame::TextDraw()
 		// Martí, aqui hauria de sortir totes les coses que vols que surtin a la pantalla de resultats, com el millor temps i podium.
 		if (bestTime >= 1000000)
 		{
-			DrawText("Best Time: XX\n", 150, 400, 70, WHITE);
+			DrawText("Best Time: XX\n", 250, 800, 70, WHITE);
 		}
 		else
 		{
-			DrawText(TextFormat("Best Time: %.2f\n", bestTime), 150, 400, 70, WHITE);
+			DrawText(TextFormat("Best Time: %.2f\n", bestTime), 250, 800, 70, WHITE);
+		}
+
+		// Draw stored podium positions
+		for (int i = 0; i < podium.size(); ++i)
+		{
+			DrawText(TextFormat("%d. %s", i + 1, podium[i].name), 320, 370 + i * 150, 70, podium[i].color);
 		}
 	}
 }
@@ -1072,16 +1070,6 @@ void ModuleGame::TextDraw()
 
 void ModuleGame::DrawPodium()
 {
-	struct KartPosition
-	{
-		const char* name;
-		int x;
-		int y;
-		int laps;
-		int positionPoints;
-		float distance;
-		Color color;
-	};
 
 	KartPosition karts[] = {
 		{"Mario", 0, 0, LapsM, PositionPointsM, 0.0f, RED},
@@ -1120,11 +1108,22 @@ void ModuleGame::DrawPodium()
 		return a.distance > b.distance; // More distance
 		});
 
-	// Draw podium positions
+	// Store podium positions
+	podium.clear();
 	for (int i = 0; i < 3; ++i)
 	{
-		DrawText(TextFormat("%d. %s", i + 1, karts[i].name), 765, 25 + i * 35, 35, karts[i].color);
+		podium.push_back(karts[i]);
 	}
+
+	// Draw podium positions
+	if (currentScreen == GAMEPLAY)
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			DrawText(TextFormat("%d. %s", i + 1, karts[i].name), 765, 25 + i * 35, 35, karts[i].color);
+		}
+	}
+
 }
 
 void ModuleGame::engineSound()
@@ -1134,13 +1133,13 @@ void ModuleGame::engineSound()
 		App->audio->PlayFx(engine_fx);
 	}
 
-	if (kart->turboMReady == true)
+	if (IsKeyPressed(KEY_SPACE) && kart->turboMReady == true)
 	{
 		App->audio->PlayFx(turbo_fx);
 		kart->turboMReady = false;
 	}
 
-	if (IsKeyPressed(KEY_ENTER) && kart->turboLReady == true)
+	if (IsKeyPressed(KEY_ENTER) && kart2->turboLReady == true)
 	{
 		App->audio->PlayFx(turbo_fx);
 		kart->turboLReady = false;	
@@ -1261,6 +1260,83 @@ void ModuleGame::CleanEntities()
 		}
 		delete path5;
 		path5 = nullptr;
+	}
+
+	if (track1 != nullptr)
+	{
+		if (track1->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track1->body);
+			track1->body = nullptr;
+		}
+		delete track1;
+		track1 = nullptr;
+	}
+
+	if (track2 != nullptr)
+	{
+		if (track2->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track2->body);
+			track2->body = nullptr;
+		}
+		delete track2;
+		track2 = nullptr;
+	}
+
+	if (track3 != nullptr)
+	{
+		if (track3->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track3->body);
+			track3->body = nullptr;
+		}
+		delete track3;
+		track3 = nullptr;
+	}
+
+	if (track4 != nullptr)
+	{
+		if (track4->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track4->body);
+			track4->body = nullptr;
+		}
+		delete track4;
+		track4 = nullptr;
+	}
+
+	if (track5 != nullptr)
+	{
+		if (track5->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track5->body);
+			track5->body = nullptr;
+		}
+		delete track5;
+		track5 = nullptr;
+	}
+
+	if (track6 != nullptr)
+	{
+		if (track6->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track6->body);
+			track6->body = nullptr;
+		}
+		delete track6;
+		track6 = nullptr;
+	}
+
+	if (track7 != nullptr)
+	{
+		if (track7->body != nullptr)
+		{
+			App->physics->world->DestroyBody(track7->body);
+			track7->body = nullptr;
+		}
+		delete track7;
+		track7 = nullptr;
 	}
 }
 
