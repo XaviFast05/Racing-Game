@@ -20,7 +20,7 @@ This project includes:
 - Main Gameplay screen:
   
   Here is where all the gameplay works. It starts with a countdown, and when it ends, the karts show up in screen and the game starts.
-  Each player has a turbo skill with a 10 second cooldown, showing when its ready on the bottom-left side of the screen. In the same spot are shown the laps of each player.
+  Each player has a *turbo* skill with a 10 second cooldown, showing when its ready on the bottom-left side of the screen. In the same spot are shown the laps of each player.
   There is also a podium that updates in real time at the top-right corner of the screen, with a timer next to it.
   
   The main loop of the game consists in a race of three laps. When a player or CPU ends the third lap, the race ends automaticlly, showing the results screen.
@@ -59,5 +59,5 @@ https://github.com/XaviFast05/Racing-Game
 
 ## Video link:
 
-
+https://youtu.be/WV69ItKAE88
 
