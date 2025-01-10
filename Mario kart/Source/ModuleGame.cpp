@@ -89,6 +89,7 @@ public:
 	Timer gameTimer;
 	float currentTime = 0.f;
 	int Num ;
+	float FF = 0.0f;
 
 	KeyboardKey upKey;
 	KeyboardKey downKey;
@@ -101,6 +102,7 @@ public:
 	bool turboLReady;
 	int currentPathIndex;
 	bool isOnTrack = true;
+	bool changeMade = false;
 
 	Timer turboTimer;
 	void StartTimer()
@@ -123,19 +125,20 @@ public:
 		float forceX = body->body->GetTransform().q.GetXAxis().x;
 		float forceY = body->body->GetTransform().q.GetXAxis().y;
 
-		if(Num == 0)
+		if (isOnTrack&&!changeMade)
 		{
-			if (isOnTrack)
-			{
-				printf("On track\n");
-			
-			}
+			FF = 0.0f;
+			changeMade = true;
+			printf("back on track\n");
 		}
-		/*else if (!isOnTrack)
+		else if (!isOnTrack&&changeMade)
 		{
-			printf("not On track\n");
-		}*/
-		
+			FF = 0.3f;
+			changeMade = false;
+		}
+
+
+
 		b2Vec2 force(forceX, forceY);
 		if(isPlayer == true)
 		{
@@ -229,10 +232,20 @@ public:
 				}
 			}		
 		}
-		else
+		/*else
 		{
 			CpuMovement();
-		}
+		}*/
+
+		// Obtener la velocidad actual del kart
+		b2Vec2 velocity = body->body->GetLinearVelocity();
+
+		// Calcular la fuerza de fricción
+		
+		b2Vec2 frictionForce = -FF * velocity;
+
+		// Aplicar la fuerza de fricción
+		body->body->ApplyForceToCenter(frictionForce, true);
 
 		if (reducingSpeed)
 		{
