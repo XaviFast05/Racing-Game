@@ -129,7 +129,6 @@ public:
 		{
 			FF = 0.0f;
 			changeMade = true;
-			printf("back on track\n");
 		}
 		else if (!isOnTrack&&changeMade)
 		{
@@ -257,7 +256,6 @@ public:
 				currentVelocity.x *= 0.5f;
 				currentVelocity.y *= 0.5f;
 				body->body->SetLinearVelocity(currentVelocity);
-				printf("Reducing speed by 1/4: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
 				reducingSpeedStep1 = false;
 			}
 			else if (elapsedTime > 0.2f && reducingSpeedStep2)
@@ -266,7 +264,6 @@ public:
 				currentVelocity.x *= 0.5f;
 				currentVelocity.y *= 0.5f;
 				body->body->SetLinearVelocity(currentVelocity);
-				printf("Reducing speed by 1/3: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
 				reducingSpeedStep2 = false;
 			}
 			else if (elapsedTime > 0.4f && reducingSpeedStep3)
@@ -275,13 +272,11 @@ public:
 				currentVelocity.x *= 0.5f;
 				currentVelocity.y *= 0.5f;
 				body->body->SetLinearVelocity(currentVelocity);
-				printf("Reducing speed by 1/2: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
 				reducingSpeedStep3 = false;
 			}
 			else if(!reducingSpeedStep3)
 			{
 				reducingSpeed = false;
-				printf("Speed reduction complete\n");
 			}
 		}
 
@@ -515,6 +510,9 @@ update_status ModuleGame::Update()
 		LapsM = 1;
 		LapsL = 1;
 		LapsP = 1;
+		PositionPointsM = 0;
+		PositionPointsL = 0;
+		PositionPointsP = 0;
 		canMusicStart = false;
 		
 		if (IsKeyPressed(KEY_SPACE))
@@ -745,7 +743,10 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		}
 		else App->audio->PlayFx(lap_fx);
 
-		printf("Lap completed\n");
+		if (LapsM == 3)
+		{
+			PositionPointsM = 10000;
+		}
 
 		PositionPointsM++;
 		LapsM++;
@@ -756,14 +757,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheck = false;
 		canWin = false;
 		newLap = true;
-		printf("canWin Reseted\n");
 		PositionPointsM--;
 	}
 	else if ((bodyA == kart->body && bodyB == winLine) && goThroughWinLine == true) // Reset if lap is not completed
 	{
 		newLap = true;
 		goThroughWinLine = false;
-		printf("newLap Reseted\n");
 		PositionPointsM--;
 	}
 
@@ -773,7 +772,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		canWin = false;
 		secondCheck = false;
 		firstCheck = true;
-		printf("First check\n");
 		PositionPointsM++;
 	}
 	else if ((bodyA == kart->body && bodyB == sensor1) && secondCheck == true) // Reset if sensor1 is touched before winLine
@@ -782,7 +780,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheck = false;
 		canWin = false;
 		newLap = false;
-		printf("firstCheck Reseted\n");
 		PositionPointsM--;
 	}
 
@@ -792,7 +789,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheck = true;
 		newLap = false;
 		canWin = false;
-		printf("Second check\n");
 		PositionPointsM++;
 	}
 	else if ((bodyA == kart->body && bodyB == sensor2) && canWin == true) // Reset if sensor2 is touched before sensor1
@@ -801,7 +797,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheck = true;
 		canWin = false;
 		newLap = false;
-		printf("secondCheck Reseted\n");
 		PositionPointsM--;
 	}
 
@@ -811,14 +806,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		firstCheck = false;
 		secondCheck = false;
 		newLap = false;
-		printf("canWin\n");
 		PositionPointsM++;
 	}
 	else if ((bodyA == kart->body && bodyB == sensor3) && newLap == true) // Dont let the player take the firstCheck unless it goes through winLine
 	{
 		goThroughWinLine = true;
 		newLap = false;
-		printf("Go through winLine\n");
 		PositionPointsM--;
 	}
 
@@ -838,7 +831,10 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		}
 		else App->audio->PlayFx(lap_fx);
 
-		printf("Lap completed\n");
+		if (LapsL == 3)
+		{
+			PositionPointsL = 10000;
+		}
 		LapsL++;
 		PositionPointsL++;
 	}
@@ -848,14 +844,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckL = false;
 		canWinL = false;
 		newLapL = true;
-		printf("canWin Reseted\n");
 		PositionPointsL--;
 	}
 	else if ((bodyA == kart2->body && bodyB == winLine) && goThroughWinLineL == true) // Reset if lap is not completed
 	{
 		newLapL = true;
 		goThroughWinLineL = false;
-		printf("newLap Reseted\n");
 		PositionPointsL--;
 	}
 
@@ -865,7 +859,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		canWinL = false;
 		secondCheckL = false;
 		firstCheckL = true;
-		printf("First check\n");
 		PositionPointsL++;
 	}
 	else if ((bodyA == kart2->body && bodyB == sensor1) && secondCheckL == true) // Reset if sensor1 is touched before winLine
@@ -874,7 +867,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckL = false;
 		canWinL = false;
 		newLapL = false;
-		printf("firstCheck Reseted\n");
 		PositionPointsL--;
 	}
 
@@ -884,7 +876,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckL = true;
 		newLapL = false;
 		canWinL = false;
-		printf("Second check\n");
 		PositionPointsL++;
 	}
 	else if ((bodyA == kart2->body && bodyB == sensor2) && canWinL == true) // Reset if sensor2 is touched before sensor1
@@ -893,7 +884,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckL = true;
 		canWinL = false;
 		newLapL = false;
-		printf("secondCheck Reseted\n");
 		PositionPointsL--;
 	}
 
@@ -903,14 +893,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		firstCheckL = false;
 		secondCheckL = false;
 		newLapL = false;
-		printf("canWin\n");
 		PositionPointsL++;
 	}
 	else if ((bodyA == kart2->body && bodyB == sensor3) && newLapL == true) // Dont let the player take the firstCheck unless it goes through winLine
 	{
 		goThroughWinLineL = true;
 		newLapL = false;
-		printf("Go through winLine\n");
 		PositionPointsL--;
 	}
 
@@ -929,7 +917,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 			finalLap = true;
 		}
 		else App->audio->PlayFx(lap_fx);
-		printf("Lap completed\n");
+
+		if (LapsP == 3)
+		{
+			PositionPointsP = 10000;
+		}
+
 		LapsP++;
 		PositionPointsP++;
 	}
@@ -939,14 +932,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckP = false;
 		canWinP = false;
 		newLapP = true;
-		printf("canWin Reseted\n");
 		PositionPointsP--;
 	}
 	else if ((bodyA == kart3->body && bodyB == winLine) && goThroughWinLineP == true) // Reset if lap is not completed
 	{
 		newLapP = true;
 		goThroughWinLineP = false;
-		printf("newLap Reseted\n");
 		PositionPointsP--;
 	}
 
@@ -956,7 +947,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		canWinP = false;
 		secondCheckP = false;
 		firstCheckP = true;
-		printf("First check\n");
 		PositionPointsP++;
 	}
 	else if ((bodyA == kart3->body && bodyB == sensor1) && secondCheckP == true) // Reset if sensor1 is touched before winLine
@@ -965,7 +955,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckP = false;
 		canWinP = false;
 		newLapP = false;
-		printf("firstCheck Reseted\n");
 		PositionPointsP--;
 	}
 
@@ -975,7 +964,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckP = true;
 		newLapP = false;
 		canWinP = false;
-		printf("Second check\n");
 		PositionPointsP++;
 	}
 	else if ((bodyA == kart3->body && bodyB == sensor2) && canWinP == true) // Reset if sensor2 is touched before sensor1
@@ -984,7 +972,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		secondCheckP = true;
 		canWinP = false;
 		newLapP = false;
-		printf("secondCheck Reseted\n");
 		PositionPointsP--;
 	}
 
@@ -994,14 +981,12 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		firstCheckP = false;
 		secondCheckP = false;
 		newLapP = false;
-		printf("canWin\n");
 		PositionPointsP++;
 	}
 	else if ((bodyA == kart3->body && bodyB == sensor3) && newLapP == true) // Dont let the player take the firstCheck unless it goes through winLine
 	{
 		goThroughWinLineP = true;
 		newLapP = false;
-		printf("Go through winLine\n");
 		PositionPointsP--;
 	}
 
@@ -1116,7 +1101,7 @@ void ModuleGame::DrawPodium()
 
 	// Calculate the distance of each kart to the initial circuit position
 	auto calculateDistance = [startX, startY](int x, int y) -> float {
-		return sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
+		return sqrt((x + startX) * (x + startX) + (y + startY) * (y + startY));
 		};
 
 	karts[0].distance = calculateDistance(karts[0].x, karts[0].y);
@@ -1134,7 +1119,7 @@ void ModuleGame::DrawPodium()
 			return a.positionPoints > b.positionPoints; // More position points
 		}
 		return a.distance > b.distance; // More distance
-		});
+	});
 
 	// Store podium positions
 	podium.clear();
@@ -1389,5 +1374,70 @@ void ModuleGame::CleanEntities()
 		delete track7;
 		track7 = nullptr;
 	}
-}
 
+	if (offtrack1 != nullptr)
+	{
+		if (offtrack1->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack1->body);
+			offtrack1->body = nullptr;
+		}
+		delete offtrack1;
+		offtrack1 = nullptr;
+	}
+
+	if (offtrack2 != nullptr)
+	{
+		if (offtrack2->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack2->body);
+			offtrack2->body = nullptr;
+		}
+		delete offtrack2;
+		offtrack2 = nullptr;
+	}
+
+	if (offtrack3 != nullptr)
+	{
+		if (offtrack3->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack3->body);
+			offtrack3->body = nullptr;
+		}
+		delete offtrack3;
+		offtrack3 = nullptr;
+	}
+
+	if (offtrack4 != nullptr)
+	{
+		if (offtrack4->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack4->body);
+			offtrack4->body = nullptr;
+		}
+		delete offtrack4;
+		offtrack4 = nullptr;
+	}
+
+	if (offtrack5 != nullptr)
+	{
+		if (offtrack5->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack5->body);
+			offtrack5->body = nullptr;
+		}
+		delete offtrack5;
+		offtrack5 = nullptr;
+	}
+
+	if (offtrack6 != nullptr)
+	{
+		if (offtrack6->body != nullptr)
+		{
+			App->physics->world->DestroyBody(offtrack6->body);
+			offtrack6->body = nullptr;
+		}
+		delete offtrack6;
+		offtrack6 = nullptr;
+	}
+}
