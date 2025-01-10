@@ -1077,6 +1077,8 @@ void ModuleGame::TextDraw()
 		{
 			DrawText(TextFormat("%d. %s", i + 1, podium[i].name), 320, 370 + i * 150, 70, podium[i].color);
 		}
+
+		DrawText("Press SPACE to return to main menu", 130, 870, 40, WHITE);
 	}
 }
 
