@@ -2,6 +2,7 @@
 
 #include "Globals.h"
 #include "Module.h"
+#include "Timer.h"
 
 #include "p2Point.h"
 
@@ -21,6 +22,8 @@ class PhysicEntity;
 class Kart;
 class InteriorWall;
 class ExteriorWall;
+class Timer;
+
 struct KartPosition
 {
 	const char* name;
@@ -55,6 +58,7 @@ public:
 	void engineSound();
 	void CleanEntities();
 	void DrawPodium();
+	void HandleCountdown();
 
 public:
 
@@ -120,6 +124,7 @@ public:
 
 	bool entitiesLoaded = false;
 	bool finalLap = false;
+	bool canMusicStart = false;
 
 	int Laps = 1;
 	int LapsM = 1;
@@ -146,6 +151,8 @@ public:
 	uint32 engine_fx;
 	uint32 turbo_fx;
 	uint32 screenPass_fx;
+	uint32 countdown_fx;
+	uint32 lastCountdown_fx;
 
 	Music titleMusic;
 	Music controlsMusic;
@@ -154,6 +161,8 @@ public:
 	Music resultsMusic;
 
 	float bestTime = 1000000.0f;
+	int countdown = 4;
+	Timer countdownTimer;
 
 	vec2<int> ray;
 	std::vector<KartPosition> podium;

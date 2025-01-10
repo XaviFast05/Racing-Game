@@ -451,6 +451,8 @@ bool ModuleGame::Start()
 	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine8.wav");
 	turbo_fx = App->audio->LoadFx("Assets/SOUND/FX/Turbo.wav");
 	screenPass_fx = App->audio->LoadFx("Assets/SOUND/FX/ScreenPass.wav");
+	countdown_fx = App->audio->LoadFx("Assets/SOUND/FX/Countdown.wav");
+	lastCountdown_fx = App->audio->LoadFx("Assets/SOUND/FX/LastCountdown.wav");
 
 	// Load music
 	titleMusic = LoadMusicStream("Assets/SOUND/MUSIC/MainMenu.ogg");
@@ -513,6 +515,7 @@ update_status ModuleGame::Update()
 		LapsM = 1;
 		LapsL = 1;
 		LapsP = 1;
+		canMusicStart = false;
 		
 		if (IsKeyPressed(KEY_SPACE))
 		{
@@ -522,6 +525,8 @@ update_status ModuleGame::Update()
 		else if (IsKeyPressed(KEY_ENTER))
 		{
 			App->audio->PlayFx(screenPass_fx);
+			countdown = 4;
+			countdownTimer.Start();
 			currentScreen = GAMEPLAY;
 		}
 		entitiesLoaded = false;
@@ -539,6 +544,8 @@ update_status ModuleGame::Update()
 		if (IsKeyPressed(KEY_SPACE))
 		{
 			App->audio->PlayFx(screenPass_fx);
+			countdown = 4;
+			countdownTimer.Start();
 			currentScreen = GAMEPLAY;
 		}
 	}
@@ -546,9 +553,12 @@ update_status ModuleGame::Update()
 	{
 		
 		// Play music
-		if ((LapsM == 3 || LapsL == 3 || LapsP == 3) && finalLap == true) UpdateMusicStream(circuitMusicFL);
-		else UpdateMusicStream(circuitMusic);
-		
+		if (canMusicStart == true)
+		{
+			if ((LapsM == 3 || LapsL == 3 || LapsP == 3) && finalLap == true) UpdateMusicStream(circuitMusicFL);
+			else UpdateMusicStream(circuitMusic);
+		}
+
 		//load sensors -------------------------------------
 		if (entitiesLoaded == false)
 		{
@@ -636,7 +646,18 @@ update_status ModuleGame::Update()
 			currentScreen = RESULTS;
 		}
 
+		// Handle countdown
+		HandleCountdown();
 
+		// Update all entities only if countdown is finished
+		if (countdown == 0)
+		{
+			// Update all entities when countdown is finished
+			for (PhysicEntity* entity : entities)
+			{
+				entity->Update();
+			}
+		}
 	}
 	else if (currentScreen == RESULTS) // Draw results
 	{
@@ -656,11 +677,6 @@ update_status ModuleGame::Update()
 
 	if (currentScreen == GAMEPLAY)
 	{
-		//Update all entities
-		for (PhysicEntity* entity : entities)
-		{
-			entity->Update();
-		}
 
 		if (IsKeyPressed(KEY_SPACE))
 		{
@@ -683,7 +699,6 @@ update_status ModuleGame::Update()
 
 		for (PhysicEntity* entity : entities)
 		{
-			entity->Update();
 			if (ray_on)
 			{
 				int hit = entity->RayHit(ray, mouse, normal);
@@ -1156,6 +1171,29 @@ void ModuleGame::engineSound()
 	{
 		App->audio->PlayFx(turbo_fx);
 		kart->turboLReady = false;	
+	}
+}
+
+void ModuleGame::HandleCountdown()
+{
+	if (countdown > 0)
+	{
+		if (countdownTimer.ReadSec() >= 1.0f)
+		{
+			countdown--;
+			if (countdown == 0) App->audio->PlayFx(lastCountdown_fx);
+			else App->audio->PlayFx(countdown_fx);
+			countdownTimer.Start();
+		}
+		if (countdown == 4)
+		{
+			DrawText(TextFormat("3"), GetScreenWidth() / 2 - 10, GetScreenHeight() / 2 - 10, 100, RED);
+		}
+		else DrawText(TextFormat("%d", countdown), GetScreenWidth() / 2 - 10, GetScreenHeight() / 2 - 10, 100, RED);
+		if (countdown == 0)
+		{
+			canMusicStart = true;
+		}
 	}
 }
 
