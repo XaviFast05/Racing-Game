@@ -42,6 +42,7 @@ public:
 		// Player 1 controls
 		if (playerNum == 0)
 		{
+			playerNum = 0;
 			upKey = KEY_W;
 			downKey = KEY_S;
 			leftKey = KEY_A;
@@ -66,7 +67,7 @@ public:
 	}
 
 	const float forceMagnitude = 1.0f;
-	const float maxSpeed = 7.0f;
+	float maxSpeed = 7.0f;
 	const float maxRotation = 5.0f;
 
 	const float inicialAngularSpeed = 0.05f;
@@ -83,6 +84,7 @@ public:
 	Timer moveTimer;
 	Timer gameTimer;
 	float currentTime = 0.f;
+	int playerNum;
 
 	KeyboardKey upKey;
 	KeyboardKey downKey;
@@ -94,12 +96,19 @@ public:
 	bool turboMReady;
 	bool turboLReady;
 	int currentPathIndex;
+	bool isOnTrack = true;
 
 	Timer turboTimer;
 	void StartTimer()
 	{
 		turboTimer.Start(); 
 	}
+
+	Timer speedReductionTimer;
+	bool reducingSpeed = false;
+	bool reducingSpeedStep1 = false;
+	bool reducingSpeedStep2 = false;
+	bool reducingSpeedStep3 = false;
 
 	void Update() override
 	{
@@ -109,6 +118,20 @@ public:
 		float forceX = body->body->GetTransform().q.GetXAxis().x;
 		float forceY = body->body->GetTransform().q.GetXAxis().y;
 
+		if (isOnTrack)
+		{
+			maxSpeed = 7.0;
+			
+			if(playerNum == 0)
+			{
+				(printf("not On track\n"));
+			}
+		}
+		else if (!isOnTrack)
+		{
+			maxSpeed = 1.0;
+		}
+		
 		b2Vec2 force(forceX, forceY);
 		if(isPlayer == true)
 		{
@@ -160,7 +183,7 @@ public:
 			if (turboKey == KEY_SPACE && turboTimer.ReadSec() > turboTime)
 			{
 				DrawText("TURBO", 85, 900, 30, RED);
-				turboMReady == true;
+				turboMReady = true;
 			}
 			else if (turboKey == KEY_SPACE && turboTimer.ReadSec() < turboTime)
 			{
@@ -170,7 +193,7 @@ public:
 			if (turboKey == KEY_ENTER && turboTimer.ReadSec() > turboTime)
 			{
 				DrawText("TURBO", 290, 900, 30, GREEN);
-				turboLReady == true;
+				turboLReady = true;
 			}
 			else if (turboKey == KEY_ENTER && turboTimer.ReadSec() < turboTime)
 			{
@@ -207,6 +230,44 @@ public:
 			CpuMovement();
 		}
 
+		if (reducingSpeed)
+		{
+			float elapsedTime = speedReductionTimer.ReadSec();
+			b2Vec2 currentVelocity = body->body->GetLinearVelocity();
+			if (elapsedTime > 0.0f && reducingSpeedStep1)
+			{
+				// Reduce speed by 1/4 after 0.1 seconds
+				currentVelocity.x *= 0.75f;
+				currentVelocity.y *= 0.75f;
+				body->body->SetLinearVelocity(currentVelocity);
+				printf("Reducing speed by 1/4: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
+				reducingSpeedStep1 = false;
+			}
+			else if (elapsedTime > 0.2f && reducingSpeedStep2)
+			{
+				// Reduce speed by 1/3 after 0.2 seconds
+				currentVelocity.x *= 2.0f / 3.0f;
+				currentVelocity.y *= 2.0f / 3.0f;
+				body->body->SetLinearVelocity(currentVelocity);
+				printf("Reducing speed by 1/3: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
+				reducingSpeedStep2 = false;
+			}
+			else if (elapsedTime > 0.4f && reducingSpeedStep3)
+			{
+				// Reduce speed by 1/2 after 0.3 seconds
+				currentVelocity.x *= 0.5f;
+				currentVelocity.y *= 0.5f;
+				body->body->SetLinearVelocity(currentVelocity);
+				printf("Reducing speed by 1/2: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
+				reducingSpeedStep3 = false;
+			}
+			else if(!reducingSpeedStep3)
+			{
+				reducingSpeed = false;
+				printf("Speed reduction complete\n");
+			}
+		}
+
 		currentTime = gameTimer.ReadSec();
 		Vector2 position{ (float)x, (float)y };
 		float scale = 0.3f;
@@ -220,11 +281,11 @@ public:
 	{
 		// path coordinates
 		std::vector<Vector2> pathSensors = {
-			{915, 420},
-			{200, 85},
-			{87, 670},
-			{500, 600},
-			{780, 915}
+			{900, 420},
+			{200, 115},
+			{107, 670},
+			{500, 500},
+			{780, 1015}
 		};
 
 		// reset path index when it reaches the end
@@ -251,12 +312,6 @@ public:
 		float forceY = direction.y * (inicialSpeed + acceleration);
 		b2Vec2 force(forceX, forceY);
 		body->body->ApplyForceToCenter(force, true);
-
-		// Chech colision
-		if (distance < 10.0f) // Umbral de colisión
-		{
-			currentPathIndex = (currentPathIndex + 1) % pathSensors.size(); // Cambiar al siguiente sensor
-		}
 
 		// Rotate kart to next location 
 		float angle = atan2(direction.y, direction.x);
@@ -486,7 +541,7 @@ update_status ModuleGame::Update()
 			path1 = App->physics->CreateRectangleSensor(915, 420, 180, 9);
 			path2 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
 			path3 = App->physics->CreateRectangleSensor(87, 670, 145, 9);
-			path4 = App->physics->CreateRectangleSensor(500, 600, 9, 160);
+			path4 = App->physics->CreateRectangleSensor(400, 720, 9, 320);
 			path5 = App->physics->CreateRectangleSensor(780, 915, 9, 160);
 
 			//load tracks ------------------------------------
@@ -900,6 +955,33 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		if (bodyB == path1 || bodyB == path2 || bodyB == path3 || bodyB == path4 || bodyB == path5)
 		{
 			kart3->currentPathIndex = (kart3->currentPathIndex + 1) % 5; // change to next path
+			if (!(kart3->reducingSpeed))
+			{
+				kart3->reducingSpeed = true;
+				kart3->reducingSpeedStep1 = true;
+				kart3->reducingSpeedStep2 = true;
+				kart3->reducingSpeedStep3 = true;
+				kart3->speedReductionTimer.Start();
+			}
+		}
+	}
+
+
+	// Update track contact state
+	if (bodyA == kart->body || bodyA == kart2->body || bodyA == kart3->body)
+	{
+		Kart* kartEntity = nullptr;
+		if (bodyA == kart->body) kartEntity = kart;
+		else if (bodyA == kart2->body) kartEntity = kart2;
+		else if (bodyA == kart3->body) kartEntity = kart3;
+
+		if (bodyB == track1 || bodyB == track2 || bodyB == track3 || bodyB == track4 || bodyB == track5 || bodyB == track6 || bodyB == track7)
+		{
+			kartEntity->isOnTrack = true;
+		}
+		else
+		{
+			kartEntity->isOnTrack = false;
 		}
 	}
 }
