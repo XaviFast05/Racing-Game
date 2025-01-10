@@ -443,7 +443,7 @@ bool ModuleGame::Start()
 	// Load sound fx
 	lap_fx = App->audio->LoadFx("Assets/SOUND/FX/LapTakenFX.wav");
 	finalLap_fx = App->audio->LoadFx("Assets/SOUND/FX/FinalLap.wav");
-	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine Sounds/engine8.wav");
+	engine_fx = App->audio->LoadFx("Assets/SOUND/FX/Engine.wav");
 	turbo_fx = App->audio->LoadFx("Assets/SOUND/FX/Turbo.wav");
 	screenPass_fx = App->audio->LoadFx("Assets/SOUND/FX/ScreenPass.wav");
 	countdown_fx = App->audio->LoadFx("Assets/SOUND/FX/Countdown.wav");
@@ -1143,21 +1143,24 @@ void ModuleGame::DrawPodium()
 
 void ModuleGame::engineSound()
 {
-	if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
+	if (canMusicStart == true)
 	{
-		App->audio->PlayFx(engine_fx);
-	}
+		if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
+		{
+			App->audio->PlayFx(engine_fx);
+		}
 
-	if (IsKeyPressed(KEY_SPACE) && kart->turboMReady == true)
-	{
-		App->audio->PlayFx(turbo_fx);
-		kart->turboMReady = false;
-	}
+		if (IsKeyPressed(KEY_SPACE) && kart->turboMReady == true)
+		{
+			App->audio->PlayFx(turbo_fx);
+			kart->turboMReady = false;
+		}
 
-	if (IsKeyPressed(KEY_ENTER) && kart2->turboLReady == true)
-	{
-		App->audio->PlayFx(turbo_fx);
-		kart->turboLReady = false;	
+		if (IsKeyPressed(KEY_ENTER) && kart2->turboLReady == true)
+		{
+			App->audio->PlayFx(turbo_fx);
+			kart->turboLReady = false;
+		}
 	}
 }
 
