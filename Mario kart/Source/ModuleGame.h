@@ -81,6 +81,13 @@ public:
 	PhysBody* track5;
 	PhysBody* track6;
 	PhysBody* track7;
+	//offtracks
+	PhysBody* offtrack1;
+	PhysBody* offtrack2;
+	PhysBody* offtrack3;
+	PhysBody* offtrack4;
+	PhysBody* offtrack5;
+	PhysBody* offtrack6;
 
 	//karts
 	Kart* kart;

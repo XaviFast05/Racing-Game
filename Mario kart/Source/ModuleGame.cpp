@@ -79,7 +79,7 @@ public:
 	float forceRotation = 0.0f;
 
 	const float inicialSpeed = 0.1f;
-	const float acceleration = 0.6f;
+	const float acceleration = 0.5f;
 
 	const float turboTime = 10.0f;
 	const float brakeSpeed = 0.5f;
@@ -231,21 +231,21 @@ public:
 					forceRotation -= 0.1;	
 				}
 			}		
+			// Obtener la velocidad actual del kart
+			b2Vec2 velocity = body->body->GetLinearVelocity();
+
+			// Calcular la fuerza de fricción
+		
+			b2Vec2 frictionForce = -FF * velocity;
+
+			// Aplicar la fuerza de fricción
+			body->body->ApplyForceToCenter(frictionForce, true);
 		}
-		/*else
+		else
 		{
 			CpuMovement();
-		}*/
+		}
 
-		// Obtener la velocidad actual del kart
-		b2Vec2 velocity = body->body->GetLinearVelocity();
-
-		// Calcular la fuerza de fricción
-		
-		b2Vec2 frictionForce = -FF * velocity;
-
-		// Aplicar la fuerza de fricción
-		body->body->ApplyForceToCenter(frictionForce, true);
 
 		if (reducingSpeed)
 		{
@@ -560,8 +560,8 @@ update_status ModuleGame::Update()
 			//load paths -------------------------------------
 			path1 = App->physics->CreateRectangleSensor(915, 420, 180, 9);
 			path2 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
-			path3 = App->physics->CreateRectangleSensor(87, 670, 145, 9);
-			path4 = App->physics->CreateRectangleSensor(400, 720, 9, 320);
+			path3 = App->physics->CreateRectangleSensor(87, 650, 145, 9);
+			path4 = App->physics->CreateRectangleSensor(420, 720, 9, 320);
 			path5 = App->physics->CreateRectangleSensor(780, 915, 9, 160);
 			path6 = App->physics->CreateRectangleSensor(510, 510, 1020, 1020);
 
@@ -580,6 +580,21 @@ update_status ModuleGame::Update()
 			track5->body->SetTransform(track5->body->GetPosition(), 337.0f * (b2_pi / 180.0f));
 			track6->body->SetTransform(track6->body->GetPosition(), 61.0f * (b2_pi / 180.0f));
 			track7->body->SetTransform(track7->body->GetPosition(), 345.0f * (b2_pi / 180.0f));
+
+			//load offtracks ---------------------------------
+			offtrack1 = App->physics->CreateRectangleSensor(649, 190, 808, 16);
+			offtrack2 = App->physics->CreateRectangleSensor(534, 289, 595, 16);
+			offtrack3 = App->physics->CreateRectangleSensor(374, 894, 429, 332);
+			offtrack4 = App->physics->CreateRectangleSensor(367, 568, 398, 16);
+			offtrack5 = App->physics->CreateRectangleSensor(644, 645, 381, 16);
+			offtrack6 = App->physics->CreateRectangleSensor(805, 974, 435, 12);
+
+			//rotate offtracks ----------------------------------
+			offtrack1->body->SetTransform(offtrack1->body->GetPosition(), 26.0f * (b2_pi / 180.0f));
+			offtrack2->body->SetTransform(offtrack2->body->GetPosition(), 26.0f * (b2_pi / 180.0f));
+			offtrack3->body->SetTransform(offtrack3->body->GetPosition(), 334.0f * (b2_pi / 180.0f));
+			offtrack4->body->SetTransform(offtrack4->body->GetPosition(), 334.0f * (b2_pi / 180.0f));
+			offtrack5->body->SetTransform(offtrack5->body->GetPosition(), 61.0f * (b2_pi / 180.0f));
 
 			//load karts -------------------------------------
 			entities.emplace_back(DBG_NEW Kart(App->physics, 916, 600, 4.71, this, mario, 0));
@@ -1001,12 +1016,10 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		else if (bodyA == kart2->body) kartEntity = kart2;
 		else if (bodyA == kart3->body) kartEntity = kart3;
 
-		static Timer trackCheckTimer;
 		static std::vector<PhysBody*> collisionList;
 
-		if (trackCheckTimer.ReadSec() >= 0.1f)
+		if (bodyB == interior->body || bodyB == exterior->body || bodyB == offtrack1 || bodyB == offtrack2 || bodyB == offtrack3 || bodyB == offtrack4 || bodyB == offtrack5 || bodyB == offtrack6)
 		{
-			trackCheckTimer.Start();
 			collisionList.clear();
 		}
 
