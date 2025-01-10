@@ -1101,7 +1101,7 @@ void ModuleGame::DrawPodium()
 
 	// Calculate the distance of each kart to the initial circuit position
 	auto calculateDistance = [startX, startY](int x, int y) -> float {
-		return sqrt((x + startX) * (x + startX) + (y + startY) * (y + startY));
+		return sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
 		};
 
 	karts[0].distance = calculateDistance(karts[0].x, karts[0].y);
