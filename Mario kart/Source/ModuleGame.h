@@ -62,6 +62,7 @@ public:
 	PhysBody* path3;
 	PhysBody* path4;
 	PhysBody* path5;
+	PhysBody* path6;
 	//tracks
 	PhysBody* track1;
 	PhysBody* track2;

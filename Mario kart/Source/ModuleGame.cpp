@@ -42,7 +42,7 @@ public:
 		// Player 1 controls
 		if (playerNum == 0)
 		{
-			playerNum = 0;
+			Num = 0;
 			upKey = KEY_W;
 			downKey = KEY_S;
 			leftKey = KEY_A;
@@ -53,6 +53,7 @@ public:
 		// Player 2 controls
 		else if (playerNum == 1)
 		{
+			Num = 1;
 			upKey = KEY_UP;
 			downKey = KEY_DOWN;
 			leftKey = KEY_LEFT;
@@ -61,7 +62,10 @@ public:
 			isPlayer = true;
 		}
 		else if (playerNum == 2)
+		{
+			Num = 2;
 			isPlayer = false;
+		}
 		// Set initial rotation
 		body->body->SetTransform(body->body->GetPosition(), initialRotation);
 	}
@@ -75,7 +79,7 @@ public:
 	float forceRotation = 0.0f;
 
 	const float inicialSpeed = 0.1f;
-	const float acceleration = 0.1f;
+	const float acceleration = 0.6f;
 
 	const float turboTime = 10.0f;
 	const float brakeSpeed = 0.5f;
@@ -84,7 +88,7 @@ public:
 	Timer moveTimer;
 	Timer gameTimer;
 	float currentTime = 0.f;
-	int playerNum;
+	int Num ;
 
 	KeyboardKey upKey;
 	KeyboardKey downKey;
@@ -110,6 +114,7 @@ public:
 	bool reducingSpeedStep2 = false;
 	bool reducingSpeedStep3 = false;
 
+
 	void Update() override
 	{
 		int x, y;
@@ -118,19 +123,18 @@ public:
 		float forceX = body->body->GetTransform().q.GetXAxis().x;
 		float forceY = body->body->GetTransform().q.GetXAxis().y;
 
-		if (isOnTrack)
+		if(Num == 0)
 		{
-			maxSpeed = 7.0;
-			
-			if(playerNum == 0)
+			if (isOnTrack)
 			{
-				(printf("not On track\n"));
+				printf("On track\n");
+			
 			}
 		}
-		else if (!isOnTrack)
+		/*else if (!isOnTrack)
 		{
-			maxSpeed = 1.0;
-		}
+			printf("not On track\n");
+		}*/
 		
 		b2Vec2 force(forceX, forceY);
 		if(isPlayer == true)
@@ -237,8 +241,8 @@ public:
 			if (elapsedTime > 0.0f && reducingSpeedStep1)
 			{
 				// Reduce speed by 1/4 after 0.1 seconds
-				currentVelocity.x *= 0.75f;
-				currentVelocity.y *= 0.75f;
+				currentVelocity.x *= 0.5f;
+				currentVelocity.y *= 0.5f;
 				body->body->SetLinearVelocity(currentVelocity);
 				printf("Reducing speed by 1/4: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
 				reducingSpeedStep1 = false;
@@ -246,8 +250,8 @@ public:
 			else if (elapsedTime > 0.2f && reducingSpeedStep2)
 			{
 				// Reduce speed by 1/3 after 0.2 seconds
-				currentVelocity.x *= 2.0f / 3.0f;
-				currentVelocity.y *= 2.0f / 3.0f;
+				currentVelocity.x *= 0.5f;
+				currentVelocity.y *= 0.5f;
 				body->body->SetLinearVelocity(currentVelocity);
 				printf("Reducing speed by 1/3: x = %.2f, y = %.2f\n", currentVelocity.x, currentVelocity.y);
 				reducingSpeedStep2 = false;
@@ -536,13 +540,14 @@ update_status ModuleGame::Update()
 			sensor1 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
 			sensor2 = App->physics->CreateRectangleSensor(87, 400, 145, 9);
 			sensor3 = App->physics->CreateRectangleSensor(800, 915, 9, 160);
-
+			
 			//load paths -------------------------------------
 			path1 = App->physics->CreateRectangleSensor(915, 420, 180, 9);
 			path2 = App->physics->CreateRectangleSensor(200, 85, 9, 140);
 			path3 = App->physics->CreateRectangleSensor(87, 670, 145, 9);
 			path4 = App->physics->CreateRectangleSensor(400, 720, 9, 320);
 			path5 = App->physics->CreateRectangleSensor(780, 915, 9, 160);
+			path6 = App->physics->CreateRectangleSensor(510, 510, 1020, 1020);
 
 			//load tracks ------------------------------------
 			track1 = App->physics->CreateRectangleSensor(935, 641, 82, 510);
@@ -975,14 +980,28 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 		else if (bodyA == kart2->body) kartEntity = kart2;
 		else if (bodyA == kart3->body) kartEntity = kart3;
 
-		if (bodyB == track1 || bodyB == track2 || bodyB == track3 || bodyB == track4 || bodyB == track5 || bodyB == track6 || bodyB == track7)
+		static Timer trackCheckTimer;
+		static std::vector<PhysBody*> collisionList;
+
+		if (trackCheckTimer.ReadSec() >= 0.1f)
 		{
-			kartEntity->isOnTrack = true;
+			trackCheckTimer.Start();
+			collisionList.clear();
 		}
-		else
+
+		collisionList.push_back(bodyB);
+
+		bool isOnTrack = false;
+		for (PhysBody* body : collisionList)
 		{
-			kartEntity->isOnTrack = false;
+			if (body == track1 || body == track2 || body == track3 || body == track4 || body == track5 || body == track6 || body == track7)
+			{
+				isOnTrack = true;
+				break;
+			}
 		}
+
+		kartEntity->isOnTrack = isOnTrack;
 	}
 }
 
