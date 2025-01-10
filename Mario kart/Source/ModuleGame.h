@@ -21,6 +21,16 @@ class PhysicEntity;
 class Kart;
 class InteriorWall;
 class ExteriorWall;
+struct KartPosition
+{
+	const char* name;
+	int x;
+	int y;
+	int laps;
+	int positionPoints;
+	float distance;
+	Color color;
+};
 
 enum Screen
 {
@@ -139,5 +149,6 @@ public:
 	float bestTime = 1000000.0f;
 
 	vec2<int> ray;
+	std::vector<KartPosition> podium;
 	bool ray_on;
 };
